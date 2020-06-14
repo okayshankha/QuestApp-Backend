@@ -22,11 +22,32 @@ Route::group(['prefix' => 'auth'], function () {
     Route::group(['middleware' => 'auth:api'], function () {
         Route::get('logout', 'AuthController@Logout');
         Route::get('user', 'AuthController@User');
+    });
+});
 
-        Route::group(['prefix' => 'password'], function () {
-            Route::post('create', 'PasswordResetController@create');
-            Route::get('find/{token}', 'PasswordResetController@find');
-            Route::post('reset', 'PasswordResetController@reset');
-        });
+
+/**
+ * Reset Password Routes
+ */
+Route::group(['prefix' => 'password', 'middleware' => 'auth:api'], function () {
+    Route::post('create', 'PasswordResetController@create');
+    Route::get('find/{token}', 'PasswordResetController@find');
+    Route::post('reset', 'PasswordResetController@reset');
+});
+
+
+Route::group(['middleware' => 'auth:api'], function () {
+
+    Route::group(['prefix' => 'faculty'], function () {
+        // Fetch Faculty Data
+        Route::get('/{id?}', 'FacultyController@Find');
+
+        // Create New Faculty
+        Route::post('/', 'FacultyController@Create');
+
+        
+
+
+        
     });
 });

@@ -38,12 +38,17 @@ class AuthController extends Controller
             'email' => 'required|string|email|unique:users',
             'password' => 'required|string|confirmed'
         ]);
+
+
         $user = new User([
             'name' => $request->name,
             'email' => $request->email,
+            'user_id' => sha1($request->email . $request->password),
             'password' => bcrypt($request->password),
             'activation_token' => Str::random(60)
         ]);
+
+
         $user->save();
 
         $avatar = Avatar::create($user->name)->getImageObject()->encode('png');
@@ -132,7 +137,7 @@ class AuthController extends Controller
         }
         $user->active = true;
         $user->activation_token = '';
-        $user->email_verified_at = Carbon::now();
+        $user->email_verified_at = Carbon::now(); 
         $user->save();
 
         $user->notify(new SignupActivateConfirmation($user));
