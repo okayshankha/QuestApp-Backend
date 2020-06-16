@@ -43,11 +43,55 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::get('/{id?}', 'FacultyController@Find');
 
         // Create New Faculty
-        Route::post('/', 'FacultyController@Create');
-
-        
-
-
-        
+        Route::post('/', 'FacultyController@Create')->middleware('admin.only');;
     });
+
+
+    Route::group(['prefix' => 'department'], function () {
+
+        // Update Department Data
+        Route::put('/set', 'DepartmentController@Update')->middleware('admin.level');
+
+        // Fetch Trashed Department Data
+        Route::get('/trashed/{id?}', 'DepartmentController@FindTrashed')->middleware('admin.level');
+
+        // Restore Trashed Department Data
+        Route::get('/restore/{id}', 'DepartmentController@Restore')->middleware('admin.level');
+
+        // Fetch Department Data
+        Route::get('/{id?}', 'DepartmentController@Find');
+
+        // Delete Department Data
+        Route::delete('/{id}', 'DepartmentController@Delete')->middleware('admin.level');
+
+        // Create New Department
+        Route::post('/', 'DepartmentController@Create')->middleware('admin.level');
+    });
+
+    Route::group(['prefix' => 'category'], function () {
+        // Update Category Data
+        Route::put('/set', 'CategoryController@Update')->middleware('admin.level');
+
+        // Fetch Trashed Category Data
+        Route::get('/trashed/{id?}', 'CategoryController@FindTrashed')->middleware('admin.level');
+
+        // Restore Trashed Category Data
+        Route::get('/restore/{id}', 'CategoryController@Restore')->middleware('admin.level');
+
+        // Fetch Category Data
+        Route::get('/{id?}', 'CategoryController@Find');
+
+        // Delete Category Data
+        Route::delete('/{id}', 'CategoryController@Delete')->middleware('admin.level');
+
+        // Create New Category
+        Route::post('/', 'CategoryController@Create')->middleware('admin.level');
+    });
+});
+
+
+Route::fallback(function () {
+    $response = config('QuestApp.JsonResponse.404');
+    $response['data']['message'] = 'Route Not Found';
+    return ResponseHelper($response);
 });

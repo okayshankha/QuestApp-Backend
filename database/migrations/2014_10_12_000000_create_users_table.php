@@ -15,7 +15,7 @@ class CreateUsersTable extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('user_id')->unique();
+            $table->string('user_id')->nullable()->unique();
             $table->string('name');
             $table->string('email')->unique();
             $table->string('avatar')->default('avatar.png');
@@ -23,7 +23,7 @@ class CreateUsersTable extends Migration
             $table->string('password');
             $table->boolean('active')->default(false);
             $table->string('activation_token');
-            $table->string('role')->default('student'); // super_admin / hod / faculty / student
+            $table->string('role')->default(config('QuestApp.UserLevels.s'));
             $table->rememberToken();
             $table->softDeletes();
             $table->timestamps();

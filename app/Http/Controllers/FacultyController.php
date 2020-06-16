@@ -82,12 +82,13 @@ class FacultyController extends Controller
         $user = new User([
             'name' => $request->name,
             'email' => $request->email,
-            'user_id' => sha1($request->email . Str::random(12)),
             'password' => bcrypt($password),
             'activation_token' => Str::random(60),
             'role' => 'faculty'
         ]);
 
+        $user->save();
+        $user->user_id = sha1('User' . $user->id);
         $user->save();
 
         $avatar = Avatar::create($user->name)->getImageObject()->encode('png');

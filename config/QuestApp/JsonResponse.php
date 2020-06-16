@@ -25,7 +25,12 @@ return [
             'message' => 'Not Found'
         ]
     ],
-
+    '403' => [
+        'httpStatusCode' => 403, // Forbidden
+        'data' => [
+            'message' => 'Forbidden'
+        ]
+    ],
     'Unauthenticated' => [
         'httpStatusCode' => 401, // Unauthenticated
         'data' => [
