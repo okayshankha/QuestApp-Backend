@@ -43,7 +43,7 @@ class SignupActivate extends Notification
         $url = url('/api/auth/signup/activate/' . $notifiable->activation_token);
         return (new MailMessage)
             ->subject('Confirm your account')
-            ->line('Thanks for signup! Please before you begin, you must confirm your account.')
+            ->line('Congratulations! Your account has been created. Before you begin, you must confirm your account.')
             ->action('Confirm Account', url($url))
             ->line('Thank you for using our application!')
             ->line('See you Online');
