@@ -9,6 +9,7 @@ use App\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use stdClass;
 
 class DepartmentController extends Controller
 {
@@ -37,31 +38,18 @@ class DepartmentController extends Controller
             /**
              * Fetch All Trashed Department Data
              */
-            $paginate = $request->query('paginate');
+            $pagelength = $request->query('pagelength');
             $page = $request->query('page');
 
-            if (!$paginate) $paginate = 10;
-            if (!$page) $page = 0;
-            if ($page == 1) $page = 0;
-            $offset = (int) $paginate * $page;
+            $Model = Department::class;
 
-
-            $total = Department::onlyTrashed()->count();
-            $hasNext = ($total - ($offset + $paginate)) > 0;
-
-            $departments = Department::onlyTrashed()->get()->skip($offset)->take($paginate);
-            $response = null;
-            if ($departments->count() > 0) {
-                $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = [
-                    'hasnext' => $hasNext,
-                    'departments' => $departments,
-                ];
-            } else {
-                $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = "No Trashed Department found";
-            }
-            return ResponseHelper($response);
+            $departments = $this->FetchPagedRecords($Model, [
+                'page' => $page,
+                'pagelength' => $pagelength,
+                'trashOnly' => true
+            ]);
+            
+            return ResponseHelper($departments);
         }
     }
 
@@ -89,31 +77,21 @@ class DepartmentController extends Controller
             /**
              * Fetch All Department Data
              */
-            $paginate = $request->query('paginate');
+            $request->validate([
+                'pagelength' => 'integer',
+                'page' => 'integer'
+            ]);
+            $pagelength = $request->query('pagelength');
             $page = $request->query('page');
 
-            if (!$paginate) $paginate = 10;
-            if (!$page) $page = 0;
-            if ($page == 1) $page = 0;
-            $offset = (int) $paginate * $page;
+            $Model = Department::class;
 
+            $departments = $this->FetchPagedRecords($Model, [
+                'page' => $page,
+                'pagelength' => $pagelength
+            ]);
 
-            $total = Department::all()->count();
-            $hasNext = ($total - ($offset + $paginate)) > 0;
-
-            $departments = Department::all()->skip($offset)->take($paginate);
-            $response = null;
-            if ($departments->count() > 0) {
-                $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = [
-                    'hasnext' => $hasNext,
-                    'departments' => $departments,
-                ];
-            } else {
-                $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = "No Department found";
-            }
-            return ResponseHelper($response);
+            return ResponseHelper($departments);
         }
     }
 
@@ -201,6 +179,23 @@ class DepartmentController extends Controller
         $department = Department::where('department_id', $request->id)->first();
 
         if ($department) {
+            if ($request->field === 'active') {
+                if (in_array($request->value, ['active', '1', 'inactive', '0'])) {
+                    if (in_array($request->value, ['active', '1'])) {
+                        $request->value = 1;
+                    } elseif (in_array($request->value, ['inactive', '0'])) {
+                        $request->value = 0;
+                    }
+                } else {
+                    $response = config('QuestApp.JsonResponse.Unprocessable');
+                    $response['errors'] = [
+                        "field" => [
+                            "The active field value is invalid. It can be active/1 or inactive/0"
+                        ]
+                    ];
+                    return ResponseHelper($response);
+                }
+            }
             $department->{$request->field} = $request->value;
             $department->modified_by_user_id = $request->user()->user_id;
             $department->save();

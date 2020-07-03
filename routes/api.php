@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+Route::get('avatar/{user_sl}/{filename}', 'AuthController@GetAvatar');
 
 Route::group(['prefix' => 'auth'], function () {
     Route::post('login', 'AuthController@Login');
@@ -38,12 +39,15 @@ Route::group(['prefix' => 'password', 'middleware' => 'auth:api'], function () {
 
 Route::group(['middleware' => 'auth:api'], function () {
 
+
+
     Route::group(['prefix' => 'faculty'], function () {
+
         // Fetch Faculty Data
         Route::get('/{id?}', 'FacultyController@Find');
 
         // Create New Faculty
-        Route::post('/', 'FacultyController@Create')->middleware('admin.only');;
+        Route::post('/', 'FacultyController@Create')->middleware('admin.only');
     });
 
 
@@ -86,6 +90,12 @@ Route::group(['middleware' => 'auth:api'], function () {
 
         // Create New Category
         Route::post('/', 'CategoryController@Create')->middleware('admin.level');
+    });
+
+
+    Route::group(['prefix' => 'stats'], function () {
+        // Fetch dashboard
+        Route::get('/dashboard/overview', 'Statistics@DashboardOverview');
     });
 });
 

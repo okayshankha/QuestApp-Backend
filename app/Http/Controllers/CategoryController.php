@@ -36,31 +36,18 @@ class CategoryController extends Controller
             /**
              * Fetch All Trashed Category Data
              */
-            $paginate = $request->query('paginate');
+            $pagelength = $request->query('pagelength');
             $page = $request->query('page');
 
-            if (!$paginate) $paginate = 10;
-            if (!$page) $page = 0;
-            if ($page == 1) $page = 0;
-            $offset = (int) $paginate * $page;
+            $Model = Category::class;
 
+            $categories = $this->FetchPagedRecords($Model, [
+                'page' => $page,
+                'pagelength' => $pagelength,
+                'trashOnly' => true
+            ]);
 
-            $total = Category::onlyTrashed()->count();
-            $hasNext = ($total - ($offset + $paginate)) > 0;
-
-            $categories = Category::onlyTrashed()->get()->skip($offset)->take($paginate);
-            $response = null;
-            if ($categories->count() > 0) {
-                $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = [
-                    'hasnext' => $hasNext,
-                    'categories' => $categories,
-                ];
-            } else {
-                $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = "No Trashed Category found";
-            }
-            return ResponseHelper($response);
+            return ResponseHelper($categories);
         }
     }
 
@@ -87,31 +74,17 @@ class CategoryController extends Controller
             /**
              * Fetch All Category Data
              */
-            $paginate = $request->query('paginate');
+            $pagelength = $request->query('pagelength');
             $page = $request->query('page');
 
-            if (!$paginate) $paginate = 10;
-            if (!$page) $page = 0;
-            if ($page == 1) $page = 0;
-            $offset = (int) $paginate * $page;
+            $Model = Category::class;
 
+            $categories = $this->FetchPagedRecords($Model, [
+                'page' => $page,
+                'pagelength' => $pagelength
+            ]);
 
-            $total = Category::all()->count();
-            $hasNext = ($total - ($offset + $paginate)) > 0;
-
-            $categories = Category::all()->skip($offset)->take($paginate);
-            $response = null;
-            if ($categories->count() > 0) {
-                $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = [
-                    'hasnext' => $hasNext,
-                    'categories' => $categories,
-                ];
-            } else {
-                $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = "No Category found";
-            }
-            return ResponseHelper($response);
+            return ResponseHelper($categories);
         }
     }
 

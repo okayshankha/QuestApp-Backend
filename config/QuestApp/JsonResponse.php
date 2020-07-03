@@ -37,4 +37,14 @@ return [
             'message' => 'Unauthenticated'
         ]
     ],
+    'Unprocessable' => [
+        'httpStatusCode' => 422, // Unprocessable
+        "message" => "The given data was invalid.",
+        "errors" => []
+        // [
+        //     "name" => [
+        //         "The name field is required."
+        //     ]
+        // ]
+    ]
 ];

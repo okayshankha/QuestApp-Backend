@@ -19,6 +19,7 @@ use App\User;
 // Notifications
 use App\Notifications\SignupActivate;
 use App\Notifications\SignupActivateConfirmation;
+use Illuminate\Support\Facades\File;
 
 class AuthController extends Controller
 {
@@ -137,7 +138,7 @@ class AuthController extends Controller
         }
         $user->active = true;
         $user->activation_token = '';
-        $user->email_verified_at = Carbon::now(); 
+        $user->email_verified_at = Carbon::now();
         $user->save();
 
         $user->notify(new SignupActivateConfirmation($user));
@@ -145,5 +146,24 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Account has been activated.'
         ]);
+    }
+
+
+    public function GetAvatar(Request $request, $user_sl, $filename)
+    {
+        // dd('app/avatars/' . $user_sl . '/' . $filename);
+        $path = storage_path('app' . DIRECTORY_SEPARATOR . 'avatars' . DIRECTORY_SEPARATOR . $user_sl . DIRECTORY_SEPARATOR . $filename);
+
+        // dd($path);
+
+        if (!File::exists($path)) {
+            abort(404);
+        }
+        $file = File::get($path);
+        $type = File::mimeType($path);
+        
+        $response = response()->make($file, 200);
+        $response->header("Content-Type", $type);
+        return $response;
     }
 }
