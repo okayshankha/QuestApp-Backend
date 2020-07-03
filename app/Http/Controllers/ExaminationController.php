@@ -2,96 +2,88 @@
 
 namespace App\Http\Controllers;
 
-
-use App\Department;
-
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-use stdClass;
 
-class DepartmentController extends Controller
+use  App\Subject;
+use App\Examination;
+
+class ExaminationController extends Controller
 {
-
     function FindTrashed(Request $request, $id = null)
     {
         if ($id) {
             /**
-             * Fetch Specific Trashed Department Data
+             * Fetch Specific Trashed Category Data
              */
-            $department = Department::onlyTrashed()
-                ->where('department_id', $id)
+            $examinations = Examination::onlyTrashed()
+                ->where('examination_id', $id)
                 ->first();
-            if ($department) {
+            if ($examinations) {
                 $response = config('QuestApp.JsonResponse.success');
                 $response['data']['message'] = [
-                    'record' => $department,
+                    'record' => $examinations,
                 ];
                 return ResponseHelper($response);
             } else {
                 $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Trashed Record found';
+                $response['data']['message'] = 'No Trashed Records found';
                 return ResponseHelper($response);
             }
         } else {
             /**
-             * Fetch All Trashed Department Data
+             * Fetch All Trashed Category Data
              */
             $pagelength = $request->query('pagelength');
             $page = $request->query('page');
 
-            $Model = Department::class;
+            $Model = Examination::class;
 
-            $departments = $this->FetchPagedRecords($Model, [
+            $examinations = $this->FetchPagedRecords($Model, [
                 'page' => $page,
                 'pagelength' => $pagelength,
                 'trashOnly' => true
             ]);
-            
-            return ResponseHelper($departments);
+
+            return ResponseHelper($examinations);
         }
     }
-
 
     function Find(Request $request, $id = null)
     {
         if ($id) {
             /**
-             * Fetch Specific Department Data
+             * Fetch Specific Category Data
              */
-            $department = Department::where('department_id', $id)
+            $examinations = Examination::where('examination_id', $id)
                 ->first();
-            if ($department) {
+            if ($examinations) {
                 $response = config('QuestApp.JsonResponse.success');
                 $response['data']['message'] = [
-                    'record' => $department,
+                    'record' => $examinations,
                 ];
                 return ResponseHelper($response);
             } else {
                 $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Record found';
+                $response['data']['message'] = 'No Records found';
                 return ResponseHelper($response);
             }
         } else {
             /**
-             * Fetch All Department Data
+             * Fetch All Subjects Data
              */
-            $request->validate([
-                'pagelength' => 'integer',
-                'page' => 'integer'
-            ]);
             $pagelength = $request->query('pagelength');
             $page = $request->query('page');
 
-            $Model = Department::class;
+            $Model = Examination::class;
 
-            $departments = $this->FetchPagedRecords($Model, [
+            $examinations = $this->FetchPagedRecords($Model, [
                 'page' => $page,
                 'pagelength' => $pagelength
             ]);
 
-            return ResponseHelper($departments);
+            return ResponseHelper($examinations);
         }
     }
 
@@ -99,46 +91,48 @@ class DepartmentController extends Controller
     function Create(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|unique:departments',
-            'description' => 'string'
+            'name' => 'required|string|unique:examinations',
+            'description' => 'string',
+            'subject_id' => 'required|string|exists:subjects,subject_id'
         ]);
 
-        $department = new Department([
+        $examination = new Examination([
             'name' => $request->name,
+            'subject_id' => $request->subject_id,
             'description' => $request->description,
             'created_by_user_id' => $request->user()->user_id,
         ]);
 
-        $department->save();
-        $department->department_id = sha1('Department' . $department->id);
-        $department->save();
+        $examination->save();
+        $examination->examination_id = sha1('Examination' . $examination->id);
+        $examination->save();
 
         $response = config('QuestApp.JsonResponse.created');
-        $response['data']['message'] = "Department Created Successfully";
+        $response['data']['message'] = "Examination Created Successfully";
         return ResponseHelper($response);
     }
-
 
     function Delete(Request $request, $id)
     {
         $validator = Validator::make(
-            ['department_id' => $id],
-            ['department_id' => 'required|exists:departments,department_id']
+            ['examination_id' => $id],
+            ['examination_id' => 'required|exists:examinations,examination_id']
         );
 
         if ($validator) {
-            $department = Department::where('department_id', $id)->first();
-            if ($department) {
-                $department->deleted_by_user_id = $request->user()->user_id;
-                $department->active = false;
-                $department->save();
-                $department->delete();
+            $examination = Examination::where('examination_id', $id)->first();
+            if ($examination) {
+                $examination->deleted_by_user_id = $request->user()->user_id;
+                $examination->active = false;
+                $examination->save();
+                $examination->delete();
+
                 $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = "Department Deleted Successfully";
+                $response['data']['message'] = "Examination Deleted Successfully";
                 return ResponseHelper($response);
             } else {
                 $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Department found';
+                $response['data']['message'] = 'No Examination found';
                 return ResponseHelper($response);
             }
         }
@@ -147,38 +141,40 @@ class DepartmentController extends Controller
     function Restore(Request $request, $id)
     {
         $validator = Validator::make(
-            ['department_id' => $id],
-            ['department_id' => 'required|exists:departments,department_id']
+            ['examination_id' => $id],
+            ['examination_id' => 'required|exists:examinations,examination_id']
         );
 
         if ($validator) {
-            $department = Department::onlyTrashed()->where('department_id', $id)->first();
-            if ($department) {
-                $department->restore();
-                $department->deleted_by_user_id = null;
-                $department->save();
+            $examination = Examination::onlyTrashed()->where('examination_id', $id)->first();
+            if ($examination) {
+                $examination->restore();
+                $examination->deleted_by_user_id = null;
+                $examination->save();
                 $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = "Department Restored Successfully";
+                $response['data']['message'] = "Examination Restored Successfully";
                 return ResponseHelper($response);
             } else {
                 $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Department found';
+                $response['data']['message'] = 'No Examination found';
                 return ResponseHelper($response);
             }
         }
     }
 
+
     function Update(Request $request)
     {
+
         $request->validate([
-            'id' => 'required|exists:departments,department_id',
-            'field' => ['required', 'string', Rule::in(Department::getUpdatableFields())],
+            'id' => 'required|exists:examinations,examination_id',
+            'field' => ['required', 'string', Rule::in(Examination::getUpdatableFields())],
             'value' => 'required|string'
         ]);
 
-        $department = Department::where('department_id', $request->id)->first();
+        $examination = Examination::where('examination_id', $request->id)->first();
 
-        if ($department) {
+        if ($examination) {
             if ($request->field === 'active') {
                 if (in_array($request->value, ['active', '1', 'inactive', '0'])) {
                     if (in_array($request->value, ['active', '1'])) {
@@ -196,16 +192,29 @@ class DepartmentController extends Controller
                     return ResponseHelper($response);
                 }
             }
-            $department->{$request->field} = $request->value;
-            $department->modified_by_user_id = $request->user()->user_id;
-            $department->save();
+            if ($request->field === 'subject_id') {
+                $subject = Subject::where('subject_id', $request->value)->first();
+                if (!$subject) {
+                    $response = config('QuestApp.JsonResponse.Unprocessable');
+                    $response['data']['errors'] = [
+                        "subject_id" => [
+                            "The selected field is invalid."
+                        ]
+                    ];
+                    return ResponseHelper($response);
+                }
+            }
+
+            $examination->{$request->field} = $request->value;
+            $examination->modified_by_user_id = $request->user()->user_id;
+            $examination->save();
 
             $response = config('QuestApp.JsonResponse.success');
-            $response['data']['message'] = 'Department has been updated';
+            $response['data']['message'] = 'Examination has been updated';
             return ResponseHelper($response);
         } else {
             $response = config('QuestApp.JsonResponse.404');
-            $response['data']['message'] = 'No Department found';
+            $response['data']['message'] = 'No Examination found';
             return ResponseHelper($response);
         }
     }

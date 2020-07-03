@@ -24,12 +24,12 @@ class CategoryController extends Controller
             if ($category) {
                 $response = config('QuestApp.JsonResponse.success');
                 $response['data']['message'] = [
-                    'category' => $category,
+                    'record' => $category,
                 ];
                 return ResponseHelper($response);
             } else {
                 $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Trashed Category found';
+                $response['data']['message'] = 'No Trashed Record found';
                 return ResponseHelper($response);
             }
         } else {
@@ -62,12 +62,12 @@ class CategoryController extends Controller
             if ($category) {
                 $response = config('QuestApp.JsonResponse.success');
                 $response['data']['message'] = [
-                    'category' => $category,
+                    'record' => $category,
                 ];
                 return ResponseHelper($response);
             } else {
                 $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Category found';
+                $response['data']['message'] = 'No Record found';
                 return ResponseHelper($response);
             }
         } else {
@@ -175,18 +175,33 @@ class CategoryController extends Controller
         $category = Category::where('category_id', $request->id)->first();
 
         if ($category) {
+            if ($request->field === 'active') {
+                if (in_array($request->value, ['active', '1', 'inactive', '0'])) {
+                    if (in_array($request->value, ['active', '1'])) {
+                        $request->value = 1;
+                    } elseif (in_array($request->value, ['inactive', '0'])) {
+                        $request->value = 0;
+                    }
+                } else {
+                    $response = config('QuestApp.JsonResponse.Unprocessable');
+                    $response['data']['errors'] = [
+                        "field" => [
+                            "The active field value is invalid. It can be active/1 or inactive/0"
+                        ]
+                    ];
+                    return ResponseHelper($response);
+                }
+            }
             if ($request->field === 'department_id') {
                 $department = Department::where('department_id', $request->value)->first();
                 if (!$department) {
-                    $response = [
-                        "message" => "The given data was invalid.",
-                        "errors" => [
-                            "department_id" => [
-                                "The selected field is invalid."
-                            ]
+                    $response = config('QuestApp.JsonResponse.Unprocessable');
+                    $response['data']['errors'] = [
+                        "department_id" => [
+                            "The selected field is invalid."
                         ]
                     ];
-                    return response($response, 422);
+                    return ResponseHelper($response);
                 }
             }
 

@@ -11,7 +11,7 @@ class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
-    private function CalculatePaginationData($total, $page, $pagelength)
+    protected function CalculatePaginationData($total, $page, $pagelength)
     {
         $defaults = [
             'pagelength' => 5,

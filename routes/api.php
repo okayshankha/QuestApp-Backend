@@ -39,8 +39,6 @@ Route::group(['prefix' => 'password', 'middleware' => 'auth:api'], function () {
 
 Route::group(['middleware' => 'auth:api'], function () {
 
-
-
     Route::group(['prefix' => 'faculty'], function () {
 
         // Fetch Faculty Data
@@ -50,11 +48,10 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::post('/', 'FacultyController@Create')->middleware('admin.only');
     });
 
-
     Route::group(['prefix' => 'department'], function () {
 
         // Update Department Data
-        Route::put('/set', 'DepartmentController@Update')->middleware('admin.level');
+        Route::put('/', 'DepartmentController@Update')->middleware('admin.level');
 
         // Fetch Trashed Department Data
         Route::get('/trashed/{id?}', 'DepartmentController@FindTrashed')->middleware('admin.level');
@@ -74,7 +71,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::group(['prefix' => 'category'], function () {
         // Update Category Data
-        Route::put('/set', 'CategoryController@Update')->middleware('admin.level');
+        Route::put('/', 'CategoryController@Update')->middleware('admin.level');
 
         // Fetch Trashed Category Data
         Route::get('/trashed/{id?}', 'CategoryController@FindTrashed')->middleware('admin.level');
@@ -92,6 +89,47 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::post('/', 'CategoryController@Create')->middleware('admin.level');
     });
 
+    Route::group(['prefix' => 'subject'], function () {
+
+        // Update Subject Data
+        Route::put('/', 'SubjectController@Update')->middleware('admin.level');
+
+        // Fetch Trashed Subject Data
+        Route::get('/trashed/{id?}', 'SubjectController@FindTrashed')->middleware('admin.level');
+
+        // Restore Trashed Subject Data
+        Route::get('/restore/{id}', 'SubjectController@Restore')->middleware('admin.level');
+
+        // Fetch Subject Data
+        Route::get('/{id?}', 'SubjectController@Find');
+
+        // Delete Subject Data
+        Route::delete('/{id}', 'SubjectController@Delete')->middleware('admin.level');
+
+        // Create New Subject
+        Route::post('/', 'SubjectController@Create')->middleware('admin.level');
+    });
+
+    Route::group(['prefix' => 'examination'], function () {
+
+        // Update Subject Data
+        Route::put('/', 'ExaminationController@Update')->middleware('admin.level');
+
+        // Fetch Trashed Subject Data
+        Route::get('/trashed/{id?}', 'ExaminationController@FindTrashed')->middleware('admin.level');
+
+        // Restore Trashed Subject Data
+        Route::get('/restore/{id}', 'ExaminationController@Restore')->middleware('admin.level');
+
+        // Fetch Subject Data
+        Route::get('/{id?}', 'ExaminationController@Find');
+
+        // Delete Subject Data
+        Route::delete('/{id}', 'ExaminationController@Delete')->middleware('admin.level');
+
+        // Create New Subject
+        Route::post('/', 'ExaminationController@Create')->middleware('admin.level');
+    });
 
     Route::group(['prefix' => 'stats'], function () {
         // Fetch dashboard

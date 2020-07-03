@@ -5,19 +5,17 @@ namespace App;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Category extends Model
+class Examination extends Model
 {
     use SoftDeletes;
 
-    protected $dates = ['deleted_at', 'created_at', 'modified_at'];
-
     protected $fillable = [
-        'name', 
-        'category_id', 
-        'department_id', 
-        'description', 
-        'active', 
-        'created_by_user_id', 
+        'name',
+        'examination_id',
+        'subject_id',
+        'description',
+        'active',
+        'created_by_user_id',
         'modified_by_user_id',
         'deleted_by_user_id'
     ];
@@ -39,9 +37,9 @@ class Category extends Model
      */
     public function getActiveAttribute($value)
     {
-        $department = Department::withTrashed()->where('department_id', $this->department_id)->first();
-        if ($department) {
-            $active_status = $value && $department->active;
+        $subject = Subject::withTrashed()->where('subject_id', $this->subject_id)->first();
+        if ($subject) {
+            $active_status = $value && $subject->active;
             return $active_status ? 1 : 0;
         } else {
             return 0;
@@ -51,7 +49,8 @@ class Category extends Model
     public static function getUpdatableFields()
     {
         return [
-            'name', 'department_id', 'description', 'active'
+            'name', 'subject_id', 'description', 'active'
         ];
     }
+
 }
