@@ -6,8 +6,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
-use  App\Subject;
+use App\Subject;
 use App\Examination;
+use App\ExamQuestionMap;
 
 class ExaminationController extends Controller
 {
@@ -162,10 +163,8 @@ class ExaminationController extends Controller
         }
     }
 
-
     function Update(Request $request)
     {
-
         $request->validate([
             'id' => 'required|exists:examinations,examination_id',
             'field' => ['required', 'string', Rule::in(Examination::getUpdatableFields())],
@@ -215,6 +214,92 @@ class ExaminationController extends Controller
         } else {
             $response = config('QuestApp.JsonResponse.404');
             $response['data']['message'] = 'No Examination found';
+            return ResponseHelper($response);
+        }
+    }
+
+    function MapQuestions(Request $request, $action = 'connect')
+    {
+        $question_ids = null;
+        if ($request->question_ids) {
+            $question_ids = $question_ids;
+            $request->merge([
+                'question_id' => array_filter(array_unique(explode(',', trim($request->question_ids, ","))))
+            ]);
+        }
+
+        $request->validate([
+            "question_ids" => "required|string",
+            "question_id" => "array",
+            'question_id.*' => 'required|exists:questions,question_id',
+            'examination_id' => 'required|exists:examinations,examination_id'
+        ]);
+
+        $index = 0;
+        foreach ($request->question_id as $question_id) {
+            $map = ExamQuestionMap::withTrashed()
+                ->where('question_id', $question_id)
+                ->where('examination_id', $request->examination_id)->first();
+
+
+            if ($action == 'connect') {
+                if (!$map) {
+                    $map = new ExamQuestionMap;
+                    $map->question_id = $request->question_id[$index++];
+                    $map->examination_id = $request->examination_id;
+                    $map->created_by_user_id = $request->user()->user_id;
+
+                    // dd($map);
+                    $map->save();
+                    $map->exam_question_map_id = sha1('ExamQuestionMap' . $map->id);
+                    $map->save();
+                } else {
+                    if ($map->deleted_by_user_id) {
+                        $map->restore();
+                    } else {
+                        // Mapping already exists.
+                    }
+                }
+            } else if ($action == 'disconnect') {
+                if ($map) {
+                    if (!$map->deleted_by_user_id) {
+                        $map->delete();
+                    } else {
+                        // Mapping already deleted.
+                    }
+                }
+            }
+        }
+
+        $response = config('QuestApp.JsonResponse.success');
+        $response['data']['message'] = 'Questions has been added';
+        return ResponseHelper($response);
+    }
+
+    function GetMappedQuestions(Request $request, $id)
+    {
+        $validator = Validator::make(
+            ['examination_id' => $id],
+            ['examination_id' => 'required|exists:examinations,examination_id']
+        );
+
+        if ($validator) {
+            // selectRaw('question_id as question')->
+            $map = ExamQuestionMap::where('examination_id', $id)->get();
+
+            if ($map->count() > 0) {
+                foreach($map as & $val){
+                    $val['question'] = $val['question_id'];
+                    unset($val['question_id']);
+                }
+                $response = config('QuestApp.JsonResponse.success');
+                $response['data']['message'] = [
+                    'records' => $map
+                ];
+            } else {
+                $response = config('QuestApp.JsonResponse.404');
+                $response['data']['message'] = 'No Records found';
+            }
             return ResponseHelper($response);
         }
     }

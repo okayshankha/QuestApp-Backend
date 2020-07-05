@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+
 Route::get('avatar/{user_sl}/{filename}', 'AuthController@GetAvatar');
 
 Route::group(['prefix' => 'auth'], function () {
@@ -111,6 +112,12 @@ Route::group(['middleware' => 'auth:api'], function () {
     });
 
     Route::group(['prefix' => 'examination'], function () {
+        
+        // Map Questions with Examination
+        Route::post('/addquestions', 'ExaminationController@MapQuestions')->middleware('admin.level');
+
+        // Get Mapped Questions
+        Route::get('/questions/{id}', 'ExaminationController@GetMappedQuestions')->middleware('admin.level');
 
         // Update Subject Data
         Route::put('/', 'ExaminationController@Update')->middleware('admin.level');
@@ -129,6 +136,27 @@ Route::group(['middleware' => 'auth:api'], function () {
 
         // Create New Subject
         Route::post('/', 'ExaminationController@Create')->middleware('admin.level');
+    });
+
+    Route::group(['prefix' => 'question'], function () {
+
+        // Update Subject Data
+        Route::put('/', 'QuestionController@Update')->middleware('admin.level');
+
+        // Fetch Trashed Subject Data
+        Route::get('/trashed/{id?}', 'QuestionController@FindTrashed')->middleware('admin.level');
+
+        // Restore Trashed Subject Data
+        Route::get('/restore/{id}', 'QuestionController@Restore')->middleware('admin.level');
+
+        // Fetch Subject Data
+        Route::get('/{id?}', 'QuestionController@Find');
+
+        // Delete Subject Data
+        Route::delete('/{id}', 'QuestionController@Delete')->middleware('admin.level');
+
+        // Create New Subject
+        Route::post('/', 'QuestionController@Create')->middleware('admin.level');
     });
 
     Route::group(['prefix' => 'stats'], function () {
