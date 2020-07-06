@@ -30,7 +30,7 @@ class Department extends Model
     public static function getUpdatableFields()
     {
         return [
-            'name', 'description'
+            'name', 'description', 'active', 'modified_by_user_id'
         ];
     }
 }

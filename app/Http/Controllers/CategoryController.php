@@ -24,43 +24,30 @@ class CategoryController extends Controller
             if ($category) {
                 $response = config('QuestApp.JsonResponse.success');
                 $response['data']['message'] = [
-                    'category' => $category,
+                    'record' => $category,
                 ];
                 return ResponseHelper($response);
             } else {
                 $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Trashed Category found';
+                $response['data']['message'] = 'No Trashed Record found';
                 return ResponseHelper($response);
             }
         } else {
             /**
              * Fetch All Trashed Category Data
              */
-            $paginate = $request->query('paginate');
+            $pagelength = $request->query('pagelength');
             $page = $request->query('page');
 
-            if (!$paginate) $paginate = 10;
-            if (!$page) $page = 0;
-            if ($page == 1) $page = 0;
-            $offset = (int) $paginate * $page;
+            $Model = Category::class;
 
+            $categories = $this->FetchPagedRecords($Model, [
+                'page' => $page,
+                'pagelength' => $pagelength,
+                'trashOnly' => true
+            ]);
 
-            $total = Category::onlyTrashed()->count();
-            $hasNext = ($total - ($offset + $paginate)) > 0;
-
-            $categories = Category::onlyTrashed()->get()->skip($offset)->take($paginate);
-            $response = null;
-            if ($categories->count() > 0) {
-                $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = [
-                    'hasnext' => $hasNext,
-                    'categories' => $categories,
-                ];
-            } else {
-                $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = "No Trashed Category found";
-            }
-            return ResponseHelper($response);
+            return ResponseHelper($categories);
         }
     }
 
@@ -75,43 +62,29 @@ class CategoryController extends Controller
             if ($category) {
                 $response = config('QuestApp.JsonResponse.success');
                 $response['data']['message'] = [
-                    'category' => $category,
+                    'record' => $category,
                 ];
                 return ResponseHelper($response);
             } else {
                 $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Category found';
+                $response['data']['message'] = 'No Record found';
                 return ResponseHelper($response);
             }
         } else {
             /**
              * Fetch All Category Data
              */
-            $paginate = $request->query('paginate');
+            $pagelength = $request->query('pagelength');
             $page = $request->query('page');
 
-            if (!$paginate) $paginate = 10;
-            if (!$page) $page = 0;
-            if ($page == 1) $page = 0;
-            $offset = (int) $paginate * $page;
+            $Model = Category::class;
 
+            $categories = $this->FetchPagedRecords($Model, [
+                'page' => $page,
+                'pagelength' => $pagelength
+            ]);
 
-            $total = Category::all()->count();
-            $hasNext = ($total - ($offset + $paginate)) > 0;
-
-            $categories = Category::all()->skip($offset)->take($paginate);
-            $response = null;
-            if ($categories->count() > 0) {
-                $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = [
-                    'hasnext' => $hasNext,
-                    'categories' => $categories,
-                ];
-            } else {
-                $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = "No Category found";
-            }
-            return ResponseHelper($response);
+            return ResponseHelper($categories);
         }
     }
 
@@ -202,18 +175,33 @@ class CategoryController extends Controller
         $category = Category::where('category_id', $request->id)->first();
 
         if ($category) {
+            if ($request->field === 'active') {
+                if (in_array($request->value, ['active', '1', 'inactive', '0'])) {
+                    if (in_array($request->value, ['active', '1'])) {
+                        $request->value = 1;
+                    } elseif (in_array($request->value, ['inactive', '0'])) {
+                        $request->value = 0;
+                    }
+                } else {
+                    $response = config('QuestApp.JsonResponse.Unprocessable');
+                    $response['data']['errors'] = [
+                        "field" => [
+                            "The active field value is invalid. It can be active/1 or inactive/0"
+                        ]
+                    ];
+                    return ResponseHelper($response);
+                }
+            }
             if ($request->field === 'department_id') {
                 $department = Department::where('department_id', $request->value)->first();
                 if (!$department) {
-                    $response = [
-                        "message" => "The given data was invalid.",
-                        "errors" => [
-                            "department_id" => [
-                                "The selected field is invalid."
-                            ]
+                    $response = config('QuestApp.JsonResponse.Unprocessable');
+                    $response['data']['errors'] = [
+                        "department_id" => [
+                            "The selected field is invalid."
                         ]
                     ];
-                    return response($response, 422);
+                    return ResponseHelper($response);
                 }
             }
 
