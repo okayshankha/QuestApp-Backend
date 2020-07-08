@@ -12,8 +12,8 @@ class UserSeeder extends Seeder
     public function run()
     {
         User::create([
-            'user_id' => sha1('User' . str_random(8)),
-            'name' => 'Super Admin',
+            'user_id' => sha1('SystemDefaultUser' . str_random(8)),
+            'name' => 'SuperAdmin',
             'email' => config('QuestApp.System.super_admin_email'),
             'password' => bcrypt('12345'),
             'active' => true,
