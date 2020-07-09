@@ -64,10 +64,10 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
 
-        'super.admin.level' => \App\Http\Middleware\SuperAdminLevel::class,
-        'admin.level' => \App\Http\Middleware\AdminLevel::class,
-        'hod.level' => \App\Http\Middleware\HodLevel::class,
-        'faculty.level' => \App\Http\Middleware\FacultyLevel::class,
-        'student.level' => \App\Http\Middleware\StudentLevel::class,
+        'super.admin.scope' => \App\Http\Middleware\SuperAdminLevel::class,
+        'admin.scope' => \App\Http\Middleware\AdminLevel::class,
+        'hod.scope' => \App\Http\Middleware\HodLevel::class,
+        'faculty.scope' => \App\Http\Middleware\FacultyLevel::class,
+        'student.scope' => \App\Http\Middleware\StudentLevel::class,
     ];
 }

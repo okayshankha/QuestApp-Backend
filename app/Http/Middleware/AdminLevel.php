@@ -25,9 +25,9 @@ class AdminLevel
                 $userLevels['a']
             ];
 
-            if(in_array($current_user_level, $allowed_user_levels)){
+            if (in_array($current_user_level, $allowed_user_levels)) {
                 return $next($request);
-            }else{
+            } else {
                 return ResponseHelper(config('QuestApp.JsonResponse.403'));
             }
         }

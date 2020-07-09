@@ -117,7 +117,7 @@ class SubjectController extends Controller
         $validator = Validator::make(
             ['subject_id' => $id],
             ['subject_id' => 'required|exists:subjects,subject_id']
-        );
+        )->validate();
 
         if ($validator) {
             $subject = Subject::where('subject_id', $id)->first();
@@ -128,10 +128,6 @@ class SubjectController extends Controller
                 $subject->delete();
                 $response = config('QuestApp.JsonResponse.success');
                 $response['data']['message'] = "Subject Deleted Successfully";
-                return ResponseHelper($response);
-            } else {
-                $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Subject found';
                 return ResponseHelper($response);
             }
         }

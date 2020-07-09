@@ -3,7 +3,7 @@
 return [
     'sa' => 'SuperAdmin',
     'a' => 'Admin',
-    'h' => 'Hod',
+    'h' => 'Hod', // Conceptual
     'f' => 'Faculty',
     's' => 'Student'
 ];

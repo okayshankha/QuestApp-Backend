@@ -15,6 +15,22 @@ class HodLevel
      */
     public function handle($request, Closure $next)
     {
-        return $next($request);
+        $current_user_level = $request->user()->role;
+        $userLevels = config('QuestApp.UserLevels');
+
+        if ($current_user_level === $userLevels['sa']) {
+            return $next($request);
+        } else {
+            $allowed_user_levels = [
+                $userLevels['a'],
+                $userLevels['h']
+            ];
+
+            if (in_array($current_user_level, $allowed_user_levels)) {
+                return $next($request);
+            } else {
+                return ResponseHelper(config('QuestApp.JsonResponse.403'));
+            }
+        }
     }
 }

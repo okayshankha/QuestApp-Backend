@@ -18,6 +18,7 @@ class CreateDepartmentsTable extends Migration
             $table->string('department_id')->nullable()->unique();
             $table->string('name');
             $table->string('description')->nullable();
+            $table->string('hod_user_id')->nullable();
             $table->boolean('active')->default(true);
             $table->string('created_by_user_id');
             $table->string('modified_by_user_id')->nullable();
