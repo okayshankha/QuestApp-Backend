@@ -102,10 +102,11 @@ class Controller extends BaseController
             $userLevels = config('QuestApp.UserLevels');
             $index = 0;
             foreach ($records as $record) {
+                $hod = null;
                 if ($record->hod_user_id) {
                     $hod = User::where('user_id', $record->hod_user_id)->where('role', $userLevels['f'])->first();
-                    $records[$index++] = array_merge($record->toArray(), ['hod' => $hod]);
                 }
+                $records[$index++] = array_merge($record->toArray(), ['hod' => $hod]);
             }
         }
 
