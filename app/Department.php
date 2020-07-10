@@ -16,7 +16,7 @@ class Department extends Model
     ];
 
     protected $hidden = [
-        'id'
+        'id', 'hod_user_id'
     ];
 
     /**

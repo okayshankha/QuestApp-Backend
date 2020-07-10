@@ -220,7 +220,6 @@ class UserController extends Controller
 
 
             if ($validator) {
-                dd('valid');
                 $record = null;
 
                 if ($filterTrashed) {
@@ -273,9 +272,6 @@ class UserController extends Controller
                     ->take($pagelength)
                     ->get();
             }
-
-
-            // $records = User::where('role', 'faculty')->skip($offset)->take($pagelength)->get();
 
             if ($offset > 0) {
                 $_records = [];
