@@ -39,22 +39,22 @@ Route::group(['prefix' => 'password', 'middleware' => 'auth:api'], function () {
 
 Route::group(['middleware' => 'auth:api'], function () {
 
-    Route::group(['prefix' => 'hod'], function () {
+    // Route::group(['prefix' => 'hod'], function () {
 
-        // Fetch Faculty Data
-        Route::get('/{id?}', 'UserController@FindHod');
+    //     // Fetch Faculty Data
+    //     Route::get('/{id?}', 'UserController@FindHod');
 
-        // Create New Faculty
-        Route::post('/', 'UserController@CreateHod')->middleware('admin.scope');
-    });
+    //     // Create New Faculty
+    //     Route::post('/', 'UserController@CreateHod')->middleware('admin.scope');
+    // });
 
     Route::group(['prefix' => 'faculty'], function () {
 
         // Fetch Trashed Faculty Data
-        Route::get('/trashed/{id?}', 'UserController@FindTrashedFaculty');
+        Route::get('/trashed/{id?}', 'UserController@FindTrashedFaculty')->middleware('super.admin.scope');
 
         // Fetch Faculty Data
-        Route::get('/{id?}', 'UserController@FindFaculty');
+        Route::get('/{id?}', 'UserController@FindTeachers')->middleware('super.admin.scope');
 
         // Create New Faculty
         Route::post('/', 'UserController@CreateFaculty')->middleware('admin.scope');
@@ -75,45 +75,45 @@ Route::group(['middleware' => 'auth:api'], function () {
 
 
 
-    Route::group(['prefix' => 'department'], function () {
+    Route::group(['prefix' => 'space'], function () {
 
         // Update Department Data
-        Route::put('/', 'DepartmentController@Update')->middleware('admin.scope');
+        Route::put('/', 'SpaceController@Update')->middleware('admin.scope');
 
         // Fetch Trashed Department Data
-        Route::get('/trashed/{id?}', 'DepartmentController@FindTrashed')->middleware('admin.scope');
+        Route::get('/trashed/{id?}', 'SpaceController@FindTrashed')->middleware('admin.scope');
 
         // Restore Trashed Department Data
-        Route::get('/restore/{id}', 'DepartmentController@Restore')->middleware('admin.scope');
+        Route::get('/restore/{id}', 'SpaceController@Restore')->middleware('admin.scope');
 
         // Fetch Department Data
-        Route::get('/{id?}', 'DepartmentController@Find');
+        Route::get('/{id?}', 'SpaceController@Find');
 
         // Delete Department Data
-        Route::delete('/{id}', 'DepartmentController@Delete')->middleware('admin.scope');
+        Route::delete('/{id}', 'SpaceController@Delete')->middleware('admin.scope');
 
         // Create New Department
-        Route::post('/', 'DepartmentController@Create')->middleware('admin.scope');
+        Route::post('/', 'SpaceController@Create')->middleware('admin.scope');
     });
 
-    Route::group(['prefix' => 'category'], function () {
+    Route::group(['prefix' => 'class'], function () {
         // Update Category Data
-        Route::put('/', 'CategoryController@Update')->middleware('admin.scope');
+        Route::put('/', 'ClassController@Update')->middleware('admin.scope');
 
         // Fetch Trashed Category Data
-        Route::get('/trashed/{id?}', 'CategoryController@FindTrashed')->middleware('admin.scope');
+        Route::get('/trashed/{id?}', 'ClassController@FindTrashed')->middleware('admin.scope');
 
         // Restore Trashed Category Data
-        Route::get('/restore/{id}', 'CategoryController@Restore')->middleware('admin.scope');
+        Route::get('/restore/{id}', 'ClassController@Restore')->middleware('admin.scope');
 
         // Fetch Category Data
-        Route::get('/{id?}', 'CategoryController@Find');
+        Route::get('/{id?}', 'ClassController@Find');
 
         // Delete Category Data
-        Route::delete('/{id}', 'CategoryController@Delete')->middleware('admin.scope');
+        Route::delete('/{id}', 'ClassController@Delete')->middleware('admin.scope');
 
         // Create New Category
-        Route::post('/', 'CategoryController@Create')->middleware('admin.scope');
+        Route::post('/', 'ClassController@Create')->middleware('admin.scope');
     });
 
     Route::group(['prefix' => 'subject'], function () {
@@ -189,6 +189,11 @@ Route::group(['middleware' => 'auth:api'], function () {
         // Fetch dashboard
         Route::get('/dashboard/overview', 'Statistics@DashboardOverview');
     });
+});
+
+Route::get('/ping', function(){
+    $response = config('QuestApp.JsonResponse.success');
+    return ResponseHelper($response);
 });
 
 

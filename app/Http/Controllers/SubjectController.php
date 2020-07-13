@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Category;
+use App\MyClass;
 use  App\Subject;
 
 use Illuminate\Http\Request;
@@ -15,7 +15,7 @@ class SubjectController extends Controller
     {
         if ($id) {
             /**
-             * Fetch Specific Trashed Category Data
+             * Fetch Specific Trashed Class Data
              */
             $subjects = Subject::onlyTrashed()
                 ->where('subject_id', $id)
@@ -33,7 +33,7 @@ class SubjectController extends Controller
             }
         } else {
             /**
-             * Fetch All Trashed Category Data
+             * Fetch All Trashed Class Data
              */
             $pagelength = $request->query('pagelength');
             $page = $request->query('page');
@@ -54,7 +54,7 @@ class SubjectController extends Controller
     {
         if ($id) {
             /**
-             * Fetch Specific Category Data
+             * Fetch Specific Class Data
              */
             $subjects = Subject::where('subject_id', $id)
                 ->first();
@@ -93,12 +93,12 @@ class SubjectController extends Controller
         $request->validate([
             'name' => 'required|string|unique:subjects',
             'description' => 'string',
-            'category_id' => 'required|string|exists:categories,category_id'
+            'class_id' => 'required|string|exists:my_classes,class_id'
         ]);
 
         $subject = new Subject([
             'name' => $request->name,
-            'category_id' => $request->category_id,
+            'class_id' => $request->class_id,
             'description' => $request->description,
             'created_by_user_id' => $request->user()->user_id,
         ]);
@@ -187,12 +187,12 @@ class SubjectController extends Controller
                     return ResponseHelper($response);
                 }
             }
-            if ($request->field === 'category_id') {
-                $category = Category::where('category_id', $request->value)->first();
-                if (!$category) {
+            if ($request->field === 'class_id') {
+                $class = MyClass::where('class_id', $request->value)->first();
+                if (!$class) {
                     $response = config('QuestApp.JsonResponse.Unprocessable');
                     $response['data']['errors'] = [
-                        "category_id" => [
+                        "class_id" => [
                             "The selected field is invalid."
                         ]
                     ];

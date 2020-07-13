@@ -25,83 +25,9 @@ class UserController extends Controller
         return $this->Find($request, $id, 'a');
     }
 
-    function FindHod(Request $request, $id = null)
+    function FindTeachers(Request $request, $id = null)
     {
-        $userLevels = config('QuestApp.UserLevels');
-        if ($id) {
-            /**
-             * Fetch Specific User Data
-             */
-            $validator = Validator::make(
-                ['id' => $id],
-                ['id' => 'required|exists:users,user_id']
-            )->validate();
-
-            if ($validator) {
-                $records = Department::where('hod_user_id', $id)->get();
-
-                if ($records->count() > 0) {
-                    $response = config('QuestApp.JsonResponse.success');
-                    $response['data']['message'] = [
-                        'record' => array_merge($request->user()->toArray(), ['departments' => $records]),
-                    ];
-                } else {
-                    $response = config('QuestApp.JsonResponse.404');
-                    $response['data']['message'] = "{$userLevels['h']} not found";
-                }
-                return ResponseHelper($response);
-            }
-        } else {
-            $hod_user_ids = Department::all()->pluck('hod_user_id')->toArray();
-
-            $pagelength = $request->query('pagelength');
-            $page = $request->query('page');
-
-            $total = count($hod_user_ids);
-
-            $CalculatePaginationData = $this->CalculatePaginationData($total, $page, $pagelength);
-
-            $pagelength =  $CalculatePaginationData['pagelength'];
-            $offset = $CalculatePaginationData['offset'];
-            $hasNext = $CalculatePaginationData['hasNext'];
-            $totalpagecount = $CalculatePaginationData['totalpagecount'];
-            $currentpagecount = $CalculatePaginationData['currentpagecount'];
-
-
-            
-
-            $records = [];
-            for ($i = $offset; $i < $pagelength && $i < count($hod_user_ids); $i++) {
-                $hod_user_id = $hod_user_ids[$i];
-                if ($hod_user_id != null || trim($hod_user_id) != '') {
-                    $records[] = array_merge(
-                        User::where('user_id', $hod_user_id)->first()->toArray(),
-                        [
-                            'departments' => Department::where('hod_user_id', $hod_user_id)->get()->toArray()
-                        ]
-                    );
-                }
-            }
-
-            if (count($records) > 0) {
-                $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = [
-                    'hasnext' => $hasNext,
-                    'currentpagecount' => $currentpagecount,
-                    'totalpagecount' => $totalpagecount,
-                    'records' => $records,
-                ];
-            } else {
-                $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = "Hod not found";
-            }
-            return ResponseHelper($response);
-        }
-    }
-
-    function FindFaculty(Request $request, $id = null)
-    {
-        return $this->Find($request, $id, 'f');
+        return $this->Find($request, $id, 't');
     }
 
     function FindStudent(Request $request, $id = null)
@@ -112,15 +38,9 @@ class UserController extends Controller
 
 
     // Find Trashed
-
-    function FindTrashedAdmin(Request $request, $id = null)
+    function FindTrashedTeachers(Request $request, $id = null)
     {
-        return $this->Find($request, $id, 'a', true);
-    }
-
-    function FindTrashedFaculty(Request $request, $id = null)
-    {
-        return $this->Find($request, $id, 'f', true);
+        return $this->Find($request, $id, 't', true);
     }
 
     function FindTrashedStudent(Request $request, $id = null)
@@ -129,9 +49,7 @@ class UserController extends Controller
     }
 
 
-
     // Create
-
     function CreateAdmin(Request $request)
     {
         return $this->Create($request, 'a');

@@ -12,7 +12,7 @@ class Subject extends Model
     protected $fillable = [
         'name',
         'subject_id',
-        'category_id',
+        'class_id',
         'description',
         'active',
         'created_by_user_id',
@@ -37,7 +37,7 @@ class Subject extends Model
      */
     public function getActiveAttribute($value)
     {
-        $category = Category::withTrashed()->where('category_id', $this->category_id)->first();
+        $category = MyClass::withTrashed()->where('class_id', $this->category_id)->first();
         if ($category) {
             $active_status = $value && $category->active;
             return $active_status ? 1 : 0;
@@ -49,7 +49,7 @@ class Subject extends Model
     public static function getUpdatableFields()
     {
         return [
-            'name', 'category_id', 'description', 'active'
+            'name', 'class_id', 'description', 'active'
         ];
     }
 }

@@ -3,28 +3,28 @@
 namespace App\Http\Controllers;
 
 
-use App\Category;
-use App\Department;
+use App\MyClass;
+use App\Space;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
-class CategoryController extends Controller
+class ClassController extends Controller
 {
     function FindTrashed(Request $request, $id = null)
     {
         if ($id) {
             /**
-             * Fetch Specific Trashed Category Data
+             * Fetch Specific Trashed Class Data
              */
-            $category = Category::onlyTrashed()
-                ->where('category_id', $id)
+            $class = MyClass::onlyTrashed()
+                ->where('class_id', $id)
                 ->first();
-            if ($category) {
+            if ($class) {
                 $response = config('QuestApp.JsonResponse.success');
                 $response['data']['message'] = [
-                    'record' => $category,
+                    'record' => $class,
                 ];
                 return ResponseHelper($response);
             } else {
@@ -34,20 +34,20 @@ class CategoryController extends Controller
             }
         } else {
             /**
-             * Fetch All Trashed Category Data
+             * Fetch All Trashed Class Data
              */
             $pagelength = $request->query('pagelength');
             $page = $request->query('page');
 
-            $Model = Category::class;
+            $Model = MyClass::class;
 
-            $categories = $this->FetchPagedRecords($Model, [
+            $classes = $this->FetchPagedRecords($Model, [
                 'page' => $page,
                 'pagelength' => $pagelength,
                 'trashOnly' => true
             ]);
 
-            return ResponseHelper($categories);
+            return ResponseHelper($classes);
         }
     }
 
@@ -55,14 +55,14 @@ class CategoryController extends Controller
     {
         if ($id) {
             /**
-             * Fetch Specific Category Data
+             * Fetch Specific Class Data
              */
-            $category = Category::where('category_id', $id)
+            $class = MyClass::where('class_id', $id)
                 ->first();
-            if ($category) {
+            if ($class) {
                 $response = config('QuestApp.JsonResponse.success');
                 $response['data']['message'] = [
-                    'record' => $category,
+                    'record' => $class,
                 ];
                 return ResponseHelper($response);
             } else {
@@ -72,19 +72,19 @@ class CategoryController extends Controller
             }
         } else {
             /**
-             * Fetch All Category Data
+             * Fetch All Class Data
              */
             $pagelength = $request->query('pagelength');
             $page = $request->query('page');
 
-            $Model = Category::class;
+            $Model = MyClass::class;
 
-            $categories = $this->FetchPagedRecords($Model, [
+            $classes = $this->FetchPagedRecords($Model, [
                 'page' => $page,
                 'pagelength' => $pagelength
             ]);
 
-            return ResponseHelper($categories);
+            return ResponseHelper($classes);
         }
     }
 
@@ -92,47 +92,47 @@ class CategoryController extends Controller
     function Create(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|unique:categories',
+            'name' => 'required|string|unique:my_classes',
             'description' => 'string',
-            'department_id' => 'required|string|exists:departments,department_id'
+            'space_id' => 'required|string|exists:spaces,space_id'
         ]);
 
-        $category = new Category([
+        $class = new MyClass([
             'name' => $request->name,
-            'department_id' => $request->department_id,
+            'space_id' => $request->space_id,
             'description' => $request->description,
             'created_by_user_id' => $request->user()->user_id,
         ]);
 
-        $category->save();
-        $category->category_id = sha1('Category' . $category->id);
-        $category->save();
+        $class->save();
+        $class->class_id = sha1('Class' . $class->id);
+        $class->save();
 
         $response = config('QuestApp.JsonResponse.created');
-        $response['data']['message'] = "Category Created Successfully";
+        $response['data']['message'] = "Class Created Successfully";
         return ResponseHelper($response);
     }
 
     function Delete(Request $request, $id)
     {
         $validator = Validator::make(
-            ['category_id' => $id],
-            ['category_id' => 'required|exists:categories,category_id']
+            ['class_id' => $id],
+            ['class_id' => 'required|exists:my_classes,class_id']
         );
 
         if ($validator) {
-            $category = Category::where('category_id', $id)->first();
-            if ($category) {
-                $category->deleted_by_user_id = $request->user()->user_id;
-                $category->active = false;
-                $category->save();
-                $category->delete();
+            $class = MyClass::where('class_id', $id)->first();
+            if ($class) {
+                $class->deleted_by_user_id = $request->user()->user_id;
+                $class->active = false;
+                $class->save();
+                $class->delete();
                 $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = "Category Deleted Successfully";
+                $response['data']['message'] = "Class Deleted Successfully";
                 return ResponseHelper($response);
             } else {
                 $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Category found';
+                $response['data']['message'] = 'No Class found';
                 return ResponseHelper($response);
             }
         }
@@ -141,22 +141,22 @@ class CategoryController extends Controller
     function Restore(Request $request, $id)
     {
         $validator = Validator::make(
-            ['category_id' => $id],
-            ['category_id' => 'required|exists:categories,category_id']
+            ['class_id' => $id],
+            ['class_id' => 'required|exists:my_classes,class_id']
         );
 
         if ($validator) {
-            $category = Category::onlyTrashed()->where('category_id', $id)->first();
-            if ($category) {
-                $category->restore();
-                $category->deleted_by_user_id = null;
-                $category->save();
+            $class = MyClass::onlyTrashed()->where('class_id', $id)->first();
+            if ($class) {
+                $class->restore();
+                $class->deleted_by_user_id = null;
+                $class->save();
                 $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = "Category Restored Successfully";
+                $response['data']['message'] = "Class Restored Successfully";
                 return ResponseHelper($response);
             } else {
                 $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Category found';
+                $response['data']['message'] = 'No Class found';
                 return ResponseHelper($response);
             }
         }
@@ -167,14 +167,14 @@ class CategoryController extends Controller
     {
 
         $request->validate([
-            'id' => 'required|exists:categories,category_id',
-            'field' => ['required', 'string', Rule::in(Category::getUpdatableFields())],
+            'id' => 'required|exists:my_classes,class_id',
+            'field' => ['required', 'string', Rule::in(MyClass::getUpdatableFields())],
             'value' => 'required|string'
         ]);
 
-        $category = Category::where('category_id', $request->id)->first();
+        $class = MyClass::where('class_id', $request->id)->first();
 
-        if ($category) {
+        if ($class) {
             if ($request->field === 'active') {
                 if (in_array($request->value, ['active', '1', 'inactive', '0'])) {
                     if (in_array($request->value, ['active', '1'])) {
@@ -192,12 +192,12 @@ class CategoryController extends Controller
                     return ResponseHelper($response);
                 }
             }
-            if ($request->field === 'department_id') {
-                $department = Department::where('department_id', $request->value)->first();
-                if (!$department) {
+            if ($request->field === 'space_id') {
+                $space = Space::where('space_id', $request->value)->first();
+                if (!$space) {
                     $response = config('QuestApp.JsonResponse.Unprocessable');
                     $response['data']['errors'] = [
-                        "department_id" => [
+                        "space_id" => [
                             "The selected field is invalid."
                         ]
                     ];
@@ -205,16 +205,16 @@ class CategoryController extends Controller
                 }
             }
 
-            $category->{$request->field} = $request->value;
-            $category->modified_by_user_id = $request->user()->user_id;
-            $category->save();
+            $class->{$request->field} = $request->value;
+            $class->modified_by_user_id = $request->user()->user_id;
+            $class->save();
 
             $response = config('QuestApp.JsonResponse.success');
-            $response['data']['message'] = 'Category has been updated';
+            $response['data']['message'] = 'Class has been updated';
             return ResponseHelper($response);
         } else {
             $response = config('QuestApp.JsonResponse.404');
-            $response['data']['message'] = 'No Category found';
+            $response['data']['message'] = 'No Class found';
             return ResponseHelper($response);
         }
     }

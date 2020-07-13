@@ -3,30 +3,28 @@
 namespace App\Http\Controllers;
 
 
-use App\Department;
+use App\Space;
 
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-use stdClass;
 
-class DepartmentController extends Controller
+class SpaceController extends Controller
 {
-
     function FindTrashed(Request $request, $id = null)
     {
         if ($id) {
             /**
-             * Fetch Specific Trashed Department Data
+             * Fetch Specific Trashed Space Data
              */
-            $department = Department::onlyTrashed()
-                ->where('department_id', $id)
+            $space = Space::onlyTrashed()
+                ->where('space_id', $id)
                 ->first();
-            if ($department) {
+            if ($space) {
                 $response = config('QuestApp.JsonResponse.success');
                 $response['data']['message'] = [
-                    'record' => $department,
+                    'record' => $space,
                 ];
                 return ResponseHelper($response);
             } else {
@@ -36,20 +34,20 @@ class DepartmentController extends Controller
             }
         } else {
             /**
-             * Fetch All Trashed Department Data
+             * Fetch All Trashed Space Data
              */
             $pagelength = $request->query('pagelength');
             $page = $request->query('page');
 
-            $Model = Department::class;
+            $Model = Space::class;
 
-            $departments = $this->FetchPagedRecords($Model, [
+            $spaces = $this->FetchPagedRecords($Model, [
                 'page' => $page,
                 'pagelength' => $pagelength,
                 'trashOnly' => true
             ]);
-            
-            return ResponseHelper($departments);
+
+            return ResponseHelper($spaces);
         }
     }
 
@@ -58,14 +56,14 @@ class DepartmentController extends Controller
     {
         if ($id) {
             /**
-             * Fetch Specific Department Data
+             * Fetch Specific Space Data
              */
-            $department = Department::where('department_id', $id)
+            $space = Space::where('space_id', $id)
                 ->first();
-            if ($department) {
+            if ($space) {
                 $response = config('QuestApp.JsonResponse.success');
                 $response['data']['message'] = [
-                    'record' => $department,
+                    'record' => $space,
                 ];
                 return ResponseHelper($response);
             } else {
@@ -75,7 +73,7 @@ class DepartmentController extends Controller
             }
         } else {
             /**
-             * Fetch All Department Data
+             * Fetch All Space Data
              */
             $request->validate([
                 'pagelength' => 'integer',
@@ -84,14 +82,14 @@ class DepartmentController extends Controller
             $pagelength = $request->query('pagelength');
             $page = $request->query('page');
 
-            $Model = Department::class;
+            $Model = Space::class;
 
-            $departments = $this->FetchPagedRecords($Model, [
+            $spaces = $this->FetchPagedRecords($Model, [
                 'page' => $page,
                 'pagelength' => $pagelength
             ]);
 
-            return ResponseHelper($departments);
+            return ResponseHelper($spaces);
         }
     }
 
@@ -99,22 +97,22 @@ class DepartmentController extends Controller
     function Create(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|unique:departments',
+            'name' => 'required|string|unique:spaces',
             'description' => 'string'
         ]);
 
-        $department = new Department([
+        $space = new Space([
             'name' => $request->name,
             'description' => $request->description,
             'created_by_user_id' => $request->user()->user_id,
         ]);
 
-        $department->save();
-        $department->department_id = sha1('Department' . $department->id);
-        $department->save();
+        $space->save();
+        $space->space_id = sha1('Space' . $space->id);
+        $space->save();
 
         $response = config('QuestApp.JsonResponse.created');
-        $response['data']['message'] = "Department Created Successfully";
+        $response['data']['message'] = "Space Created Successfully";
         return ResponseHelper($response);
     }
 
@@ -122,23 +120,23 @@ class DepartmentController extends Controller
     function Delete(Request $request, $id)
     {
         $validator = Validator::make(
-            ['department_id' => $id],
-            ['department_id' => 'required|exists:departments,department_id']
+            ['space_id' => $id],
+            ['space_id' => 'required|exists:spaces,space_id']
         );
 
         if ($validator) {
-            $department = Department::where('department_id', $id)->first();
-            if ($department) {
-                $department->deleted_by_user_id = $request->user()->user_id;
-                $department->active = false;
-                $department->save();
-                $department->delete();
+            $space = Space::where('space_id', $id)->first();
+            if ($space) {
+                $space->deleted_by_user_id = $request->user()->user_id;
+                $space->active = false;
+                $space->save();
+                $space->delete();
                 $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = "Department Deleted Successfully";
+                $response['data']['message'] = "Space Deleted Successfully";
                 return ResponseHelper($response);
             } else {
                 $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Department found';
+                $response['data']['message'] = 'No Space found';
                 return ResponseHelper($response);
             }
         }
@@ -147,22 +145,22 @@ class DepartmentController extends Controller
     function Restore(Request $request, $id)
     {
         $validator = Validator::make(
-            ['department_id' => $id],
-            ['department_id' => 'required|exists:departments,department_id']
+            ['space_id' => $id],
+            ['space_id' => 'required|exists:spaces,space_id']
         );
 
         if ($validator) {
-            $department = Department::onlyTrashed()->where('department_id', $id)->first();
-            if ($department) {
-                $department->restore();
-                $department->deleted_by_user_id = null;
-                $department->save();
+            $space = Space::onlyTrashed()->where('space_id', $id)->first();
+            if ($space) {
+                $space->restore();
+                $space->deleted_by_user_id = null;
+                $space->save();
                 $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = "Department Restored Successfully";
+                $response['data']['message'] = "Space Restored Successfully";
                 return ResponseHelper($response);
             } else {
                 $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Department found';
+                $response['data']['message'] = 'No Space found';
                 return ResponseHelper($response);
             }
         }
@@ -171,14 +169,14 @@ class DepartmentController extends Controller
     function Update(Request $request)
     {
         $request->validate([
-            'id' => 'required|exists:departments,department_id',
-            'field' => ['required', 'string', Rule::in(Department::getUpdatableFields())],
+            'id' => 'required|exists:spaces,space_id',
+            'field' => ['required', 'string', Rule::in(Space::getUpdatableFields())],
             'value' => 'required|string'
         ]);
 
-        $department = Department::where('department_id', $request->id)->first();
+        $space = Space::where('space_id', $request->id)->first();
 
-        if ($department) {
+        if ($space) {
             if ($request->field === 'active') {
                 if (in_array($request->value, ['active', '1', 'inactive', '0'])) {
                     if (in_array($request->value, ['active', '1'])) {
@@ -196,16 +194,16 @@ class DepartmentController extends Controller
                     return ResponseHelper($response);
                 }
             }
-            $department->{$request->field} = $request->value;
-            $department->modified_by_user_id = $request->user()->user_id;
-            $department->save();
+            $space->{$request->field} = $request->value;
+            $space->modified_by_user_id = $request->user()->user_id;
+            $space->save();
 
             $response = config('QuestApp.JsonResponse.success');
-            $response['data']['message'] = 'Department has been updated';
+            $response['data']['message'] = 'Space has been updated';
             return ResponseHelper($response);
         } else {
             $response = config('QuestApp.JsonResponse.404');
-            $response['data']['message'] = 'No Department found';
+            $response['data']['message'] = 'No Space found';
             return ResponseHelper($response);
         }
     }
