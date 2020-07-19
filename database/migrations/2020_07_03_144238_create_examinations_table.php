@@ -20,6 +20,7 @@ class CreateExaminationsTable extends Migration
             $table->string('name');
             $table->string('description')->nullable();
             $table->string('questions')->nullable();
+            $table->integer('passing_percentage')->default(20);
             $table->boolean('active')->default(true);
             $table->string('created_by_user_id');
             $table->string('modified_by_user_id')->nullable();

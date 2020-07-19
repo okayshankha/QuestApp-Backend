@@ -85,9 +85,16 @@ class Controller extends BaseController
 
         $records = null;
         if (!$trashOnly) {
-            $records = $Model::all()->skip($offset)->take($pagelength);
+            $records = $Model::all()
+                ->where('created_by_user_id', request()->user()->user_id)
+                ->skip($offset)
+                ->take($pagelength);
         } else {
-            $records = $Model::onlyTrashed()->get()->skip($offset)->take($pagelength);
+            $records = $Model::onlyTrashed()
+                ->where('created_by_user_id', request()->user()->user_id)
+                ->get() 
+                ->skip($offset)
+                ->take($pagelength);
         }
 
         if ($offset > 0) {
@@ -100,10 +107,8 @@ class Controller extends BaseController
 
         $response = null;
         if (!count($records)) {
-            $response = config('QuestApp.JsonResponse.404');
-            if (!$trashOnly) {
-                $response['data']['message'] = "No Records found";
-            } else {
+            $response = config('QuestApp.JsonResponse.no_records_found');
+            if ($trashOnly) {
                 $response['data']['message'] = "No Trashed Records found";
             }
         } else {

@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
 use App\Question;
+use App\Rules\QuestionBelongsToUser;
 
 class QuestionController extends Controller
 {
@@ -16,6 +17,11 @@ class QuestionController extends Controller
             /**
              * Fetch Specific Trashed Category Data
              */
+            $request->merge(['question_id' => $id]);
+            $request->validate([
+                'question_id' => ['required', 'string', 'exists:questions,question_id', new QuestionBelongsToUser],
+            ]);
+
             $question = Question::onlyTrashed()
                 ->where('question_id', $id)
                 ->first();
@@ -54,6 +60,11 @@ class QuestionController extends Controller
             /**
              * Fetch Specific Category Data
              */
+            $request->merge(['question_id' => $id]);
+            $request->validate([
+                'question_id' => ['required', 'string', 'exists:questions,question_id', new QuestionBelongsToUser],
+            ]);
+
             $question = Question::where('question_id', $id)
                 ->first();
             if ($question) {
@@ -62,8 +73,7 @@ class QuestionController extends Controller
                 $response['data']['result'] = $question;
                 return ResponseHelper($response);
             } else {
-                $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Records found';
+                $response = config('QuestApp.JsonResponse.no_records_found');
                 return ResponseHelper($response);
             }
         } else {
@@ -87,24 +97,23 @@ class QuestionController extends Controller
     function Create(Request $request)
     {
         $request->validate([
-            'question' => 'required|string|unique:questions',
+            'question' => ['required', 'string', new QuestionBelongsToUser],
             'question_image_url' => 'string',
             'options' => 'string',
+            'type' => ['string', Rule::in(config('QuestApp.System.question_types'))],
+            'points' => 'integer'
         ]);
 
-        $_option = null;
+        $request->type = $request->type ? strtoupper($request->type) : config('QuestApp.System.question_types')[config('QuestApp.System.default_question_types_index')];
+
+        $_option = $request->options;
         $_accept_attributes = ['option', 'iscorrect', 'ismathexpr'];
 
-        if (!JsonValidationHelper($request->options)) {
-            $response = config('QuestApp.JsonResponse.Unprocessable');
-            $response['data']['errors'] = [
-                "field" => [
-                    "The options field value is invalid. It has to be a valid json array"
-                ]
-            ];
-            return ResponseHelper($response);
-        } else {
-            if (!preg_match('/^[[]/', $request->options)) {
+        if ($request->type !== config('QuestApp.System.question_types')[2]  /* index 2 for TXT type */) {
+            if (!JsonValidationHelper($request->options)) {
+                /**
+                 * Check if the given data is a valid json or not
+                 */
                 $response = config('QuestApp.JsonResponse.Unprocessable');
                 $response['data']['errors'] = [
                     "field" => [
@@ -113,47 +122,63 @@ class QuestionController extends Controller
                 ];
                 return ResponseHelper($response);
             } else {
-                $has_iscorrect_count = 0;
-                $index = -1;
-                $_option_text = [];
-                $_option = json_decode($request->options, true);
-
-                if (count($_option) < 2) {
+                if (!preg_match('/^[[]/', $request->options)) {
+                    /**
+                     * Check if the given json data is a array of json objects or not
+                     */
                     $response = config('QuestApp.JsonResponse.Unprocessable');
                     $response['data']['errors'] = [
                         "field" => [
-                            "The options field value is invalid. There should be atleast 2 options for each questions."
+                            "The options field value is invalid. It has to be a valid json array"
                         ]
                     ];
                     return ResponseHelper($response);
-                }
+                } else {
+                    $has_iscorrect_count = 0;
+                    $index = -1;
+                    $_option_text = [];
+                    $_option = json_decode($_option, true);
 
-                foreach ($_option as $value) {
-                    $index++;
-                    if (!array_key_exists('option', $value)) {
+                    if (count($_option) < 2) {
                         $response = config('QuestApp.JsonResponse.Unprocessable');
                         $response['data']['errors'] = [
                             "field" => [
-                                "The options field value is invalid. Each option should need to have 'option'."
+                                "The options field value is invalid. There should be atleast 2 options for each questions."
                             ]
                         ];
                         return ResponseHelper($response);
-                    } else {
-                        if (in_array($value, $_option_text)) {
+                    }
+
+                    foreach ($_option as $value) {
+                        $index++;
+                        if (!array_key_exists('option', $value)) {
+                            /**
+                             * Each option must have a 'option' field
+                             */
                             $response = config('QuestApp.JsonResponse.Unprocessable');
                             $response['data']['errors'] = [
                                 "field" => [
-                                    "The options field value is invalid. There are duplicate options."
+                                    "The options field value is invalid. Each array element should have 'option' field."
                                 ]
                             ];
                             return ResponseHelper($response);
                         } else {
-                            $_option_text[] = $value;
-                            if (array_key_exists('iscorrect', $value) && $value['iscorrect'] === 'true') {
-                                $has_iscorrect_count++;
+                            if (in_array($value['option'], $_option_text)) {
+                                $response = config('QuestApp.JsonResponse.Unprocessable');
+                                $response['data']['errors'] = [
+                                    "field" => [
+                                        "The options field value is invalid. There are duplicate options."
+                                    ]
+                                ];
+                                return ResponseHelper($response);
                             } else {
-                                if ($value['iscorrect'] !== 'true') {
-                                    unset($_option[$index]['iscorrect']);
+                                $_option_text[] = $value['option'];
+                                if (array_key_exists('iscorrect', $value) && $value['iscorrect'] === 'true') {
+                                    $has_iscorrect_count++;
+                                } else {
+                                    if ($value['iscorrect'] !== 'true') {
+                                        unset($_option[$index]['iscorrect']);
+                                    }
                                 }
 
                                 $keys = array_keys($value);
@@ -165,24 +190,36 @@ class QuestionController extends Controller
                             }
                         }
                     }
-                }
 
-                if ($has_iscorrect_count !== 1) {
-                    $response = config('QuestApp.JsonResponse.Unprocessable');
-                    $response['data']['errors'] = [
-                        "field" => [
-                            "The options field value is invalid. There must exist one option correct."
-                        ]
-                    ];
-                    return ResponseHelper($response);
+                    if ($has_iscorrect_count <= 0) {
+                        $response = config('QuestApp.JsonResponse.Unprocessable');
+                        $response['data']['errors'] = [
+                            "field" => [
+                                "The options field value is invalid. There must exist atleast one option correct."
+                            ]
+                        ];
+                        return ResponseHelper($response);
+                    }
+
+
+                    if ($has_iscorrect_count <= 1) {
+                        $request->type = config('QuestApp.System.question_types')[0]; // MCQ or Multiple choice questions (radio)
+                    } else {
+                        $request->type = config('QuestApp.System.question_types')[1]; // MTQ or Multiple true questions (checkbox)
+                    }
                 }
             }
+
+            $_option = json_encode($_option, JSON_UNESCAPED_SLASHES);
         }
 
         $question = new Question([
             'question' => $request->question,
+            'space_id' => $request->space_id,
             'question_image_url' => $request->question_image_url,
-            'options' => json_encode($_option, JSON_UNESCAPED_SLASHES),
+            'options' => $_option,
+            'question_type' => $request->type,
+            'points' => $request->points ? $request->points : 1,
             'created_by_user_id' => $request->user()->user_id,
         ]);
 
@@ -197,16 +234,16 @@ class QuestionController extends Controller
 
     function Delete(Request $request, $id)
     {
-        $validator = Validator::make(
-            ['question_id' => $id],
-            ['question_id' => 'required|exists:questions,question_id']
-        );
+        $request->merge(['question_id' => $id]);
+        $request->validate([
+            'question_id' => ['required', 'string', 'exists:questions,question_id', new QuestionBelongsToUser],
+        ]);
 
+        $validator = 1;
         if ($validator) {
             $question = Question::where('question_id', $id)->first();
             if ($question) {
                 $question->deleted_by_user_id = $request->user()->user_id;
-                // $question->active = false;
                 $question->save();
                 $question->delete();
                 $response = config('QuestApp.JsonResponse.success');
@@ -222,33 +259,30 @@ class QuestionController extends Controller
 
     function Restore(Request $request, $id)
     {
-        $validator = Validator::make(
-            ['question_id' => $id],
-            ['question_id' => 'required|exists:questions,question_id']
-        );
+        $request->merge(['question_id' => $id]);
+        $request->validate([
+            'question_id' => ['required', 'string', 'exists:questions,question_id', new QuestionBelongsToUser],
+        ]);
 
-        if ($validator) {
-            $question = Question::onlyTrashed()->where('question_id', $id)->first();
-            if ($question) {
-                $question->restore();
-                $question->deleted_by_user_id = null;
-                $question->save();
-                $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = "Question Restored Successfully";
-                return ResponseHelper($response);
-            } else {
-                $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Question found';
-                return ResponseHelper($response);
-            }
+        $question = Question::onlyTrashed()->where('question_id', $id)->first();
+        if ($question) {
+            $question->restore();
+            $question->deleted_by_user_id = null;
+            $question->save();
+            $response = config('QuestApp.JsonResponse.success');
+            $response['data']['message'] = "Question Restored Successfully";
+            return ResponseHelper($response);
+        } else {
+            $response = config('QuestApp.JsonResponse.404');
+            $response['data']['message'] = 'No Question found';
+            return ResponseHelper($response);
         }
     }
 
     function Update(Request $request)
     {
-
         $request->validate([
-            'id' => 'required|exists:questions,question_id',
+            'id' => ['required', 'exists:questions,question_id', new QuestionBelongsToUser],
             'field' => ['required', 'string', Rule::in(Question::getUpdatableFields())],
             'value' => 'required|string'
         ]);
@@ -281,10 +315,12 @@ class QuestionController extends Controller
             $response = config('QuestApp.JsonResponse.success');
             $response['data']['message'] = 'Question has been updated';
             return ResponseHelper($response);
-        } else {
-            $response = config('QuestApp.JsonResponse.404');
-            $response['data']['message'] = 'No Question found';
-            return ResponseHelper($response);
         }
+
+        // else {
+        //     $response = config('QuestApp.JsonResponse.404');
+        //     $response['data']['message'] = 'No Question found';
+        //     return ResponseHelper($response);
+        // }
     }
 }

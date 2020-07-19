@@ -78,111 +78,112 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::group(['prefix' => 'space'], function () {
 
         // Update Department Data
-        Route::put('/', 'SpaceController@Update')->middleware('admin.scope');
+        Route::put('/', 'SpaceController@Update')->middleware('teacher.scope');
 
         // Fetch Trashed Department Data
-        Route::get('/trashed/{id?}', 'SpaceController@FindTrashed')->middleware('admin.scope');
+        Route::get('/trashed/{id?}', 'SpaceController@FindTrashed')->middleware('teacher.scope');
 
         // Restore Trashed Department Data
-        Route::get('/restore/{id}', 'SpaceController@Restore')->middleware('admin.scope');
+        Route::get('/restore/{id}', 'SpaceController@Restore')->middleware('teacher.scope');
 
-        // Fetch Department Data
-        Route::get('/{id?}', 'SpaceController@Find');
+        // Fetch Space Data
+        Route::get('/{id?}', 'SpaceController@Find')->middleware('teacher.scope');
 
         // Delete Department Data
-        Route::delete('/{id}', 'SpaceController@Delete')->middleware('admin.scope');
+        Route::delete('/{id}', 'SpaceController@Delete')->middleware('teacher.scope');
 
         // Create New Department
-        Route::post('/', 'SpaceController@Create')->middleware('admin.scope');
+        Route::post('/', 'SpaceController@Create')->middleware('teacher.scope');
     });
 
     Route::group(['prefix' => 'class'], function () {
-        // Update Category Data
-        Route::put('/', 'ClassController@Update')->middleware('admin.scope');
 
-        // Fetch Trashed Category Data
-        Route::get('/trashed/{id?}', 'ClassController@FindTrashed')->middleware('admin.scope');
+        // Update Class Data
+        Route::put('/', 'ClassController@Update')->middleware('teacher.scope');
 
-        // Restore Trashed Category Data
-        Route::get('/restore/{id}', 'ClassController@Restore')->middleware('admin.scope');
+        // Fetch Trashed Class Data
+        Route::get('/trashed/{id?}', 'ClassController@FindTrashed')->middleware('teacher.scope');
 
-        // Fetch Category Data
+        // Restore Trashed Class Data
+        Route::get('/restore/{id}', 'ClassController@Restore')->middleware('teacher.scope');
+
+        // Fetch Class Data
         Route::get('/{id?}', 'ClassController@Find');
 
-        // Delete Category Data
-        Route::delete('/{id}', 'ClassController@Delete')->middleware('admin.scope');
+        // Delete Class Data
+        Route::delete('/{id}', 'ClassController@Delete')->middleware('teacher.scope');
 
-        // Create New Category
-        Route::post('/', 'ClassController@Create')->middleware('admin.scope');
+        // Create New Class
+        Route::post('/', 'ClassController@Create')->middleware('teacher.scope');
     });
 
     Route::group(['prefix' => 'subject'], function () {
 
         // Update Subject Data
-        Route::put('/', 'SubjectController@Update')->middleware('admin.scope');
+        Route::put('/', 'SubjectController@Update')->middleware('teacher.scope');
 
         // Fetch Trashed Subject Data
-        Route::get('/trashed/{id?}', 'SubjectController@FindTrashed')->middleware('admin.scope');
+        Route::get('/trashed/{id?}', 'SubjectController@FindTrashed')->middleware('teacher.scope');
 
         // Restore Trashed Subject Data
-        Route::get('/restore/{id}', 'SubjectController@Restore')->middleware('admin.scope');
+        Route::get('/restore/{id}', 'SubjectController@Restore')->middleware('teacher.scope');
 
         // Fetch Subject Data
         Route::get('/{id?}', 'SubjectController@Find');
 
         // Delete Subject Data
-        Route::delete('/{id}', 'SubjectController@Delete')->middleware('admin.scope');
+        Route::delete('/{id}', 'SubjectController@Delete')->middleware('teacher.scope');
 
         // Create New Subject
-        Route::post('/', 'SubjectController@Create')->middleware('admin.scope');
+        Route::post('/', 'SubjectController@Create')->middleware('teacher.scope');
     });
 
     Route::group(['prefix' => 'examination'], function () {
 
         // Map Questions with Examination
-        Route::post('/addquestions', 'ExaminationController@MapQuestions')->middleware('admin.scope');
+        Route::post('/addquestions', 'ExaminationController@MapQuestions')->middleware('teacher.scope');
 
         // Get Mapped Questions
-        Route::get('/questions/{id}', 'ExaminationController@GetMappedQuestions')->middleware('admin.scope');
+        Route::get('/questions/{id}', 'ExaminationController@GetMappedQuestions')->middleware('teacher.scope');
 
         // Update Subject Data
-        Route::put('/', 'ExaminationController@Update')->middleware('admin.scope');
+        Route::put('/', 'ExaminationController@Update')->middleware('teacher.scope');
 
         // Fetch Trashed Subject Data
-        Route::get('/trashed/{id?}', 'ExaminationController@FindTrashed')->middleware('admin.scope');
+        Route::get('/trashed/{id?}', 'ExaminationController@FindTrashed')->middleware('teacher.scope');
 
         // Restore Trashed Subject Data
-        Route::get('/restore/{id}', 'ExaminationController@Restore')->middleware('admin.scope');
+        Route::get('/restore/{id}', 'ExaminationController@Restore')->middleware('teacher.scope');
 
         // Fetch Subject Data
-        Route::get('/{id?}', 'ExaminationController@Find');
+        Route::get('/{id?}', 'ExaminationController@Find')->middleware('teacher.scope');
 
         // Delete Subject Data
-        Route::delete('/{id}', 'ExaminationController@Delete')->middleware('admin.scope');
+        Route::delete('/{id}', 'ExaminationController@Delete')->middleware('teacher.scope');
 
         // Create New Subject
-        Route::post('/', 'ExaminationController@Create')->middleware('admin.scope');
+        Route::post('/', 'ExaminationController@Create')->middleware('teacher.scope');
     });
 
     Route::group(['prefix' => 'question'], function () {
 
         // Update Subject Data
-        Route::put('/', 'QuestionController@Update')->middleware('admin.scope');
+        Route::put('/', 'QuestionController@Update')->middleware('teacher.scope');
 
         // Fetch Trashed Subject Data
-        Route::get('/trashed/{id?}', 'QuestionController@FindTrashed')->middleware('admin.scope');
+        Route::get('/trashed/{id?}', 'QuestionController@FindTrashed')->middleware('teacher.scope');
 
         // Restore Trashed Subject Data
-        Route::get('/restore/{id}', 'QuestionController@Restore')->middleware('admin.scope');
+        Route::get('/restore/{id}', 'QuestionController@Restore')->middleware('teacher.scope');
 
         // Fetch Subject Data
-        Route::get('/{id?}', 'QuestionController@Find');
+        Route::get('/{id?}', 'QuestionController@Find')->middleware('teacher.scope');
 
         // Delete Subject Data
-        Route::delete('/{id}', 'QuestionController@Delete')->middleware('admin.scope');
+        Route::delete('/{id}', 'QuestionController@Delete')->middleware('teacher.scope');
 
         // Create New Subject
-        Route::post('/', 'QuestionController@Create')->middleware('admin.scope');
+        Route::post('/', 'QuestionController@Create')->middleware('teacher.scope');
     });
 
     Route::group(['prefix' => 'stats'], function () {

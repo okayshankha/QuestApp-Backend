@@ -13,6 +13,12 @@ return [
             'message' => 'Created'
         ]
     ],
+    'no_records_found' => [
+        'httpStatusCode' => 200, // Okay
+        'data' => [
+            'message' => 'No Records Found'
+        ]
+    ],
     'error' => [
         'httpStatusCode' => 200, // Okay
         'data' => [

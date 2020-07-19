@@ -25,6 +25,8 @@ class Question extends Model
         'question',
         'question_image_url',
         'options',
+        'question_type',
+        'points',
         'active',
         'created_by_user_id',
         'modified_by_user_id',
@@ -37,13 +39,14 @@ class Question extends Model
 
     public static function getOptionsAttribute($value)
     {
-        return json_decode($value, true);
+        $_value = json_decode($value, true);
+        return $_value ? $_value : $value;
     }
 
     public static function getUpdatableFields()
     {
         return [
-            'question', 'question_id', 'question_image_url', 'options', 'active'
+            'question', 'question_id', 'question_image_url', 'question_type', 'options', 'active'. 'points'
         ];
     }
 }

@@ -65,9 +65,7 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
 
         'super.admin.scope' => \App\Http\Middleware\SuperAdminLevel::class,
-        'admin.scope' => \App\Http\Middleware\AdminLevel::class,
-        'hod.scope' => \App\Http\Middleware\HodLevel::class,
-        'faculty.scope' => \App\Http\Middleware\FacultyLevel::class,
+        'teacher.scope' => \App\Http\Middleware\TeacherLevel::class,
         'student.scope' => \App\Http\Middleware\StudentLevel::class,
     ];
 }

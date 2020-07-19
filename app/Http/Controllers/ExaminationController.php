@@ -9,6 +9,9 @@ use Illuminate\Validation\Rule;
 use App\Subject;
 use App\Examination;
 use App\ExamQuestionMap;
+use App\Rules\ExaminationBelongsToUser;
+use App\Rules\QuestionBelongsToUser;
+use App\Rules\SubjectBelongsToUser;
 
 class ExaminationController extends Controller
 {
@@ -18,6 +21,11 @@ class ExaminationController extends Controller
             /**
              * Fetch Specific Trashed Category Data
              */
+            $request->merge(['examination_id' => $id]);
+            $request->validate([
+                'examination_id' => ['required', 'string', 'exists:examinations,examination_id', new ExaminationBelongsToUser],
+            ]);
+
             $examinations = Examination::onlyTrashed()
                 ->where('examination_id', $id)
                 ->first();
@@ -56,6 +64,11 @@ class ExaminationController extends Controller
             /**
              * Fetch Specific Category Data
              */
+            $request->merge(['examination_id' => $id]);
+            $request->validate([
+                'examination_id' => ['required', 'string', 'exists:examinations,examination_id', new ExaminationBelongsToUser],
+            ]);
+
             $examinations = Examination::where('examination_id', $id)
                 ->first();
             if ($examinations) {
@@ -90,9 +103,9 @@ class ExaminationController extends Controller
     function Create(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|unique:examinations',
+            'name' => ['required', 'string', new ExaminationBelongsToUser],
             'description' => 'string',
-            'subject_id' => 'required|string|exists:subjects,subject_id'
+            'subject_id' => ['required', 'string', 'exists:subjects,subject_id', new SubjectBelongsToUser]
         ]);
 
         $examination = new Examination([
@@ -113,58 +126,64 @@ class ExaminationController extends Controller
 
     function Delete(Request $request, $id)
     {
-        $validator = Validator::make(
-            ['examination_id' => $id],
-            ['examination_id' => 'required|exists:examinations,examination_id']
-        );
+        // $validator = Validator::make(
+        //     ['examination_id' => $id],
+        //     ['examination_id' => 'required|exists:examinations,examination_id']
+        // );
 
-        if ($validator) {
-            $examination = Examination::where('examination_id', $id)->first();
-            if ($examination) {
-                $examination->deleted_by_user_id = $request->user()->user_id;
-                $examination->active = false;
-                $examination->save();
-                $examination->delete();
+        $request->merge(['examination_id' => $id]);
+        $request->validate([
+            'examination_id' => ['required', 'string', 'exists:examinations,examination_id', new ExaminationBelongsToUser],
+        ]);
 
-                $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = "Examination Deleted Successfully";
-                return ResponseHelper($response);
-            } else {
-                $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Examination found';
-                return ResponseHelper($response);
-            }
+        $examination = Examination::where('examination_id', $id)->first();
+        if ($examination) {
+            $examination->deleted_by_user_id = $request->user()->user_id;
+            $examination->active = false;
+            $examination->save();
+            $examination->delete();
+
+            $response = config('QuestApp.JsonResponse.success');
+            $response['data']['message'] = "Examination Deleted Successfully";
+            return ResponseHelper($response);
+        } else {
+            $response = config('QuestApp.JsonResponse.404');
+            $response['data']['message'] = 'No Examination found';
+            return ResponseHelper($response);
         }
     }
 
     function Restore(Request $request, $id)
     {
-        $validator = Validator::make(
-            ['examination_id' => $id],
-            ['examination_id' => 'required|exists:examinations,examination_id']
-        );
+        // $validator = Validator::make(
+        //     ['examination_id' => $id],
+        //     ['examination_id' => 'required|exists:examinations,examination_id']
+        // );
 
-        if ($validator) {
-            $examination = Examination::onlyTrashed()->where('examination_id', $id)->first();
-            if ($examination) {
-                $examination->restore();
-                $examination->deleted_by_user_id = null;
-                $examination->save();
-                $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = "Examination Restored Successfully";
-                return ResponseHelper($response);
-            } else {
-                $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Examination found';
-                return ResponseHelper($response);
-            }
+        $request->merge(['examination_id' => $id]);
+        $request->validate([
+            'examination_id' => ['required', 'string', 'exists:examinations,examination_id', new ExaminationBelongsToUser],
+        ]);
+
+        $examination = Examination::onlyTrashed()->where('examination_id', $id)->first();
+        if ($examination) {
+            $examination->restore();
+            $examination->deleted_by_user_id = null;
+            $examination->save();
+            $response = config('QuestApp.JsonResponse.success');
+            $response['data']['message'] = "Examination Restored Successfully";
+            return ResponseHelper($response);
+        } else {
+            $response = config('QuestApp.JsonResponse.404');
+            $response['data']['message'] = 'No Examination found';
+            return ResponseHelper($response);
         }
     }
 
     function Update(Request $request)
     {
         $request->validate([
-            'id' => 'required|exists:examinations,examination_id',
+            'id' => ['required', 'string', 'exists:examinations,examination_id', new ExaminationBelongsToUser],
             'field' => ['required', 'string', Rule::in(Examination::getUpdatableFields())],
             'value' => 'required|string'
         ]);
@@ -229,8 +248,8 @@ class ExaminationController extends Controller
         $request->validate([
             "question_ids" => "required|string",
             "question_id" => "array",
-            'question_id.*' => 'required|exists:questions,question_id',
-            'examination_id' => 'required|exists:examinations,examination_id'
+            'question_id.*' => ['required', 'exists:questions,question_id', new QuestionBelongsToUser],
+            'examination_id' => ['required', 'exists:examinations,examination_id', new ExaminationBelongsToUser]
         ]);
 
         $index = 0;
@@ -276,29 +295,30 @@ class ExaminationController extends Controller
 
     function GetMappedQuestions(Request $request, $id)
     {
-        $validator = Validator::make(
-            ['examination_id' => $id],
-            ['examination_id' => 'required|exists:examinations,examination_id']
-        );
+        // $validator = Validator::make(
+        //     ['examination_id' => $id],
+        //     ['examination_id' => 'required|exists:examinations,examination_id']
+        // );
 
-        if ($validator) {
-            // selectRaw('question_id as question')->
-            $map = ExamQuestionMap::where('examination_id', $id)->get();
+        $request->merge(['examination_id' => $id]);
+        $request->validate([
+            'examination_id' => ['required', 'string', 'exists:examinations,examination_id', new ExaminationBelongsToUser],
+        ]);
 
-            if ($map->count() > 0) {
-                foreach($map as & $val){
-                    $val['question'] = $val['question_id'];
-                    unset($val['question_id']);
-                }
-                $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = [
-                    'records' => $map
-                ];
-            } else {
-                $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Records found';
+        $map = ExamQuestionMap::where('examination_id', $id)->get();
+        if ($map->count() > 0) {
+            foreach ($map as &$val) {
+                $val['question'] = $val['question_id'];
+                unset($val['question_id']);
             }
-            return ResponseHelper($response);
+            $response = config('QuestApp.JsonResponse.success');
+            $response['data']['message'] = [
+                'records' => $map
+            ];
+        } else {
+            $response = config('QuestApp.JsonResponse.404');
+            $response['data']['message'] = 'No Records found';
         }
+        return ResponseHelper($response);
     }
 }

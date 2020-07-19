@@ -36,7 +36,6 @@ class UserController extends Controller
     }
 
 
-
     // Find Trashed
     function FindTrashedTeachers(Request $request, $id = null)
     {

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 
 use App\MyClass;
+use App\Rules\ClassBelongsToUser;
+use App\Rules\SpaceBelongsToUser;
 use App\Space;
 
 use Illuminate\Http\Request;
@@ -18,6 +20,11 @@ class ClassController extends Controller
             /**
              * Fetch Specific Trashed Class Data
              */
+            $request->merge(['class_id' => $id]);
+            $request->validate([
+                'class_id' => ['required', 'string', 'exists:my_classes,class_id', new ClassBelongsToUser],
+            ]);
+
             $class = MyClass::onlyTrashed()
                 ->where('class_id', $id)
                 ->first();
@@ -57,6 +64,11 @@ class ClassController extends Controller
             /**
              * Fetch Specific Class Data
              */
+            $request->merge(['class_id' => $id]);
+            $request->validate([
+                'class_id' => ['required', 'string', 'exists:my_classes,class_id', new ClassBelongsToUser],
+            ]);
+
             $class = MyClass::where('class_id', $id)
                 ->first();
             if ($class) {
@@ -92,10 +104,11 @@ class ClassController extends Controller
     function Create(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|unique:my_classes',
+            'name' => ['required', 'string', new QuestionBelongsToUser],
             'description' => 'string',
-            'space_id' => 'required|string|exists:spaces,space_id'
+            'space_id' => ['required', 'string', 'exists:spaces,space_id', new SpaceBelongsToUser]
         ]);
+
 
         $class = new MyClass([
             'name' => $request->name,
@@ -115,59 +128,65 @@ class ClassController extends Controller
 
     function Delete(Request $request, $id)
     {
-        $validator = Validator::make(
-            ['class_id' => $id],
-            ['class_id' => 'required|exists:my_classes,class_id']
-        );
+        // $validator = Validator::make(
+        //     ['class_id' => $id],
+        //     ['class_id' => 'required|exists:my_classes,class_id']
+        // );
 
-        if ($validator) {
-            $class = MyClass::where('class_id', $id)->first();
-            if ($class) {
-                $class->deleted_by_user_id = $request->user()->user_id;
-                $class->active = false;
-                $class->save();
-                $class->delete();
-                $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = "Class Deleted Successfully";
-                return ResponseHelper($response);
-            } else {
-                $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Class found';
-                return ResponseHelper($response);
-            }
+        $request->merge(['class_id' => $id]);
+        $request->validate([
+            'class_id' => ['required', 'string', 'exists:my_classes,class_id', new ClassBelongsToUser],
+        ]);
+
+
+        $class = MyClass::where('class_id', $id)->first();
+        if ($class) {
+            $class->deleted_by_user_id = $request->user()->user_id;
+            $class->active = false;
+            $class->save();
+            $class->delete();
+            $response = config('QuestApp.JsonResponse.success');
+            $response['data']['message'] = "Class Deleted Successfully";
+            return ResponseHelper($response);
+        } else {
+            $response = config('QuestApp.JsonResponse.404');
+            $response['data']['message'] = 'No Class found';
+            return ResponseHelper($response);
         }
     }
 
     function Restore(Request $request, $id)
     {
-        $validator = Validator::make(
-            ['class_id' => $id],
-            ['class_id' => 'required|exists:my_classes,class_id']
-        );
+        // $validator = Validator::make(
+        //     ['class_id' => $id],
+        //     ['class_id' => 'required|exists:my_classes,class_id']
+        // );
 
-        if ($validator) {
-            $class = MyClass::onlyTrashed()->where('class_id', $id)->first();
-            if ($class) {
-                $class->restore();
-                $class->deleted_by_user_id = null;
-                $class->save();
-                $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = "Class Restored Successfully";
-                return ResponseHelper($response);
-            } else {
-                $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Class found';
-                return ResponseHelper($response);
-            }
+        $request->merge(['class_id' => $id]);
+        $request->validate([
+            'class_id' => ['required', 'string', 'exists:my_classes,class_id', new ClassBelongsToUser],
+        ]);
+
+        $class = MyClass::onlyTrashed()->where('class_id', $id)->first();
+        if ($class) {
+            $class->restore();
+            $class->deleted_by_user_id = null;
+            $class->save();
+            $response = config('QuestApp.JsonResponse.success');
+            $response['data']['message'] = "Class Restored Successfully";
+            return ResponseHelper($response);
+        } else {
+            $response = config('QuestApp.JsonResponse.404');
+            $response['data']['message'] = 'No Class found';
+            return ResponseHelper($response);
         }
     }
 
 
     function Update(Request $request)
     {
-
         $request->validate([
-            'id' => 'required|exists:my_classes,class_id',
+            'id' => ['required', 'exists:my_classes,class_id', new ClassBelongsToUser],
             'field' => ['required', 'string', Rule::in(MyClass::getUpdatableFields())],
             'value' => 'required|string'
         ]);

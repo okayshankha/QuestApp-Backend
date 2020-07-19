@@ -4,7 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 
-class FacultyLevel
+class TeacherLevel
 {
     /**
      * Handle an incoming request.
@@ -22,9 +22,7 @@ class FacultyLevel
             return $next($request);
         } else {
             $allowed_user_levels = [
-                $userLevels['a'],
-                $userLevels['h'],
-                $userLevels['f']
+                $userLevels['t'],
             ];
 
             if (in_array($current_user_level, $allowed_user_levels)) {

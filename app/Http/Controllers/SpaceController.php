@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
-
+use App\Rules\SpaceBelongsToUser;
 use App\Space;
 
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
 class SpaceController extends Controller
@@ -18,6 +17,11 @@ class SpaceController extends Controller
             /**
              * Fetch Specific Trashed Space Data
              */
+            $request->merge(['space_id' => $id]);
+            $request->validate([
+                'space_id' => ['required', 'string', new SpaceBelongsToUser],
+            ]);
+
             $space = Space::onlyTrashed()
                 ->where('space_id', $id)
                 ->first();
@@ -57,6 +61,11 @@ class SpaceController extends Controller
             /**
              * Fetch Specific Space Data
              */
+            $request->merge(['space_id' => $id]);
+            $request->validate([
+                'space_id' => ['required', 'string', new SpaceBelongsToUser],
+            ]);
+
             $space = Space::where('space_id', $id)
                 ->first();
             if ($space) {
@@ -95,7 +104,7 @@ class SpaceController extends Controller
     function Create(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|unique:spaces',
+            'name' => ['required', 'string', new SpaceBelongsToUser],
             'description' => 'string'
         ]);
 
@@ -117,57 +126,63 @@ class SpaceController extends Controller
 
     function Delete(Request $request, $id)
     {
-        $validator = Validator::make(
-            ['space_id' => $id],
-            ['space_id' => 'required|exists:spaces,space_id']
-        );
+        // $validator = Validator::make(
+        //     ['space_id' => $id],
+        //     ['space_id' => 'required|exists:spaces,space_id']
+        // );
 
-        if ($validator) {
-            $space = Space::where('space_id', $id)->first();
-            if ($space) {
-                $space->deleted_by_user_id = $request->user()->user_id;
-                $space->active = false;
-                $space->save();
-                $space->delete();
-                $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = "Space Deleted Successfully";
-                return ResponseHelper($response);
-            } else {
-                $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Space found';
-                return ResponseHelper($response);
-            }
+        $request->merge(['space_id' => $id]);
+        $request->validate([
+            'space_id' => ['required', 'string', 'exists:spaces,space_id', new SpaceBelongsToUser],
+        ]);
+
+        $space = Space::where('space_id', $id)->first();
+        if ($space) {
+            $space->deleted_by_user_id = $request->user()->user_id;
+            $space->active = false;
+            $space->save();
+            $space->delete();
+            $response = config('QuestApp.JsonResponse.success');
+            $response['data']['message'] = "Space Deleted Successfully";
+            return ResponseHelper($response);
+        } else {
+            $response = config('QuestApp.JsonResponse.404');
+            $response['data']['message'] = 'No Space found';
+            return ResponseHelper($response);
         }
     }
 
     function Restore(Request $request, $id)
     {
-        $validator = Validator::make(
-            ['space_id' => $id],
-            ['space_id' => 'required|exists:spaces,space_id']
-        );
+        // $validator = Validator::make(
+        //     ['space_id' => $id],
+        //     ['space_id' => 'required|exists:spaces,space_id']
+        // );
 
-        if ($validator) {
-            $space = Space::onlyTrashed()->where('space_id', $id)->first();
-            if ($space) {
-                $space->restore();
-                $space->deleted_by_user_id = null;
-                $space->save();
-                $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = "Space Restored Successfully";
-                return ResponseHelper($response);
-            } else {
-                $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Space found';
-                return ResponseHelper($response);
-            }
+        $request->merge(['space_id' => $id]);
+        $request->validate([
+            'space_id' => ['required', 'string', new SpaceBelongsToUser],
+        ]);
+
+        $space = Space::onlyTrashed()->where('space_id', $id)->first();
+        if ($space) {
+            $space->restore();
+            $space->deleted_by_user_id = null;
+            $space->save();
+            $response = config('QuestApp.JsonResponse.success');
+            $response['data']['message'] = "Space Restored Successfully";
+            return ResponseHelper($response);
+        } else {
+            $response = config('QuestApp.JsonResponse.404');
+            $response['data']['message'] = 'No Space found';
+            return ResponseHelper($response);
         }
     }
 
     function Update(Request $request)
     {
         $request->validate([
-            'id' => 'required|exists:spaces,space_id',
+            'id' => ['required', 'exists:spaces,space_id', new SpaceBelongsToUser],
             'field' => ['required', 'string', Rule::in(Space::getUpdatableFields())],
             'value' => 'required|string'
         ]);

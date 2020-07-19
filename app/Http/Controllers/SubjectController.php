@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\MyClass;
+use App\Rules\ClassBelongsToUser;
+use App\Rules\SubjectBelongsToUser;
 use  App\Subject;
 
 use Illuminate\Http\Request;
@@ -17,6 +19,11 @@ class SubjectController extends Controller
             /**
              * Fetch Specific Trashed Class Data
              */
+            $request->merge(['subject_id' => $id]);
+            $request->validate([
+                'subject_id' => ['required', 'string', 'exists:subjects,subject_id', new SubjectBelongsToUser],
+            ]);
+
             $subjects = Subject::onlyTrashed()
                 ->where('subject_id', $id)
                 ->first();
@@ -55,6 +62,11 @@ class SubjectController extends Controller
             /**
              * Fetch Specific Class Data
              */
+            $request->merge(['subject_id' => $id]);
+            $request->validate([
+                'subject_id' => ['required', 'string', 'exists:subjects,subject_id', new SubjectBelongsToUser],
+            ]);
+
             $subjects = Subject::where('subject_id', $id)
                 ->first();
             if ($subjects) {
@@ -89,9 +101,9 @@ class SubjectController extends Controller
     function Create(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|unique:subjects',
+            'name' => ['required', 'string', new SubjectBelongsToUser],
             'description' => 'string',
-            'class_id' => 'required|string|exists:my_classes,class_id'
+            'class_id' => ['required', 'string', 'exists:my_classes,class_id', new ClassBelongsToUser]
         ]);
 
         $subject = new Subject([
@@ -112,55 +124,60 @@ class SubjectController extends Controller
 
     function Delete(Request $request, $id)
     {
-        $validator = Validator::make(
-            ['subject_id' => $id],
-            ['subject_id' => 'required|exists:subjects,subject_id']
-        )->validate();
+        // $validator = Validator::make(
+        //     ['subject_id' => $id],
+        //     ['subject_id' => 'required|exists:subjects,subject_id']
+        // )->validate();
 
-        if ($validator) {
-            $subject = Subject::where('subject_id', $id)->first();
-            if ($subject) {
-                $subject->deleted_by_user_id = $request->user()->user_id;
-                $subject->active = false;
-                $subject->save();
-                $subject->delete();
-                $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = "Subject Deleted Successfully";
-                return ResponseHelper($response);
-            }
+        $request->merge(['subject_id' => $id]);
+        $request->validate([
+            'subject_id' => ['required', 'string', 'exists:subjects,subject_id', new SubjectBelongsToUser],
+        ]);
+
+        $subject = Subject::where('subject_id', $id)->first();
+        if ($subject) {
+            $subject->deleted_by_user_id = $request->user()->user_id;
+            $subject->active = false;
+            $subject->save();
+            $subject->delete();
+            $response = config('QuestApp.JsonResponse.success');
+            $response['data']['message'] = "Subject Deleted Successfully";
+            return ResponseHelper($response);
         }
     }
 
     function Restore(Request $request, $id)
     {
-        $validator = Validator::make(
-            ['subject_id' => $id],
-            ['subject_id' => 'required|exists:subjects,subject_id']
-        );
+        // $validator = Validator::make(
+        //     ['subject_id' => $id],
+        //     ['subject_id' => 'required|exists:subjects,subject_id']
+        // );
 
-        if ($validator) {
-            $subject = Subject::onlyTrashed()->where('subject_id', $id)->first();
-            if ($subject) {
-                $subject->restore();
-                $subject->deleted_by_user_id = null;
-                $subject->save();
-                $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = "Subject Restored Successfully";
-                return ResponseHelper($response);
-            } else {
-                $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Subject found';
-                return ResponseHelper($response);
-            }
+        $request->merge(['subject_id' => $id]);
+        $request->validate([
+            'subject_id' => ['required', 'string', 'exists:subjects,subject_id', new SubjectBelongsToUser],
+        ]);
+
+        $subject = Subject::onlyTrashed()->where('subject_id', $id)->first();
+        if ($subject) {
+            $subject->restore();
+            $subject->deleted_by_user_id = null;
+            $subject->save();
+            $response = config('QuestApp.JsonResponse.success');
+            $response['data']['message'] = "Subject Restored Successfully";
+            return ResponseHelper($response);
+        } else {
+            $response = config('QuestApp.JsonResponse.404');
+            $response['data']['message'] = 'No Subject found';
+            return ResponseHelper($response);
         }
     }
 
 
     function Update(Request $request)
     {
-
         $request->validate([
-            'id' => 'required|exists:subjects,subject_id',
+            'id' => ['required', 'string', 'exists:subjects,subject_id', new SubjectBelongsToUser],
             'field' => ['required', 'string', Rule::in(Subject::getUpdatableFields())],
             'value' => 'required|string'
         ]);
