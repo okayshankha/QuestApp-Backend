@@ -23,9 +23,8 @@ class SpaceController extends Controller
                 ->first();
             if ($space) {
                 $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = [
-                    'record' => $space,
-                ];
+                $response['data']['message'] = 'Records Fetched Successfully';
+                $response['data']['result'] = $space;
                 return ResponseHelper($response);
             } else {
                 $response = config('QuestApp.JsonResponse.404');
@@ -62,9 +61,8 @@ class SpaceController extends Controller
                 ->first();
             if ($space) {
                 $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = [
-                    'record' => $space,
-                ];
+                $response['data']['message'] = 'Records Fetched Successfully';
+                $response['data']['result'] = $space;
                 return ResponseHelper($response);
             } else {
                 $response = config('QuestApp.JsonResponse.404');

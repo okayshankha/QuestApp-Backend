@@ -153,15 +153,15 @@ class UserController extends Controller
 
                 if ($record) {
                     $response = config('QuestApp.JsonResponse.success');
-                    $response['data']['message'] = [
-                        'record' => $record,
-                    ];
+                    $response['data']['message'] = 'Records Fetched successfully';
+                    $response['data']['result'] = $record;
+
                     return ResponseHelper($response);
                 }
             }
         } else {
             /**
-             * Fetch All User Data
+             * Fetch All User Data (Trashed or Active)
              */
             $pagelength = $request->query('pagelength');
             $page = $request->query('page');
@@ -202,7 +202,8 @@ class UserController extends Controller
             $response = null;
             if ($records->count() > 0) {
                 $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = [
+                $response['data']['message'] = 'Records Fetched successfully';
+                $response['data']['result'] = [
                     'hasnext' => $hasNext,
                     'currentpagecount' => $currentpagecount,
                     'totalpagecount' => $totalpagecount,
@@ -215,69 +216,4 @@ class UserController extends Controller
             return ResponseHelper($response);
         }
     }
-
-    // private function FindTrashed(Request $request, $id = null, $type)
-    // {
-    //     $userLevels = config('QuestApp.UserLevels');
-    //     if ($id) {
-    //         /**
-    //          * Fetch Specific Trashed User Data
-    //          */
-    //         $record = User::onlyTrashed()->where('user_id', $id)
-    //             ->where('role', $userLevels[$type])
-    //             ->first();
-    //         if ($record) {
-    //             $response = config('QuestApp.JsonResponse.success');
-    //             $response['data']['message'] = [
-    //                 'record' => $record,
-    //             ];
-    //             return ResponseHelper($response);
-    //         } else {
-    //             $response = config('QuestApp.JsonResponse.404');
-    //             $response['data']['message'] = 'No Record found';
-    //             return ResponseHelper($response);
-    //         }
-    //     } else {
-    //         /**
-    //          * Fetch All Trashed User Data
-    //          */
-    //         $pagelength = $request->query('pagelength');
-    //         $page = $request->query('page');
-
-    //         $total = User::onlyTrashed()->where('role', $userLevels[$type])->count();
-
-    //         $CalculatePaginationData = $this->CalculatePaginationData($total, $page, $pagelength);
-
-    //         $pagelength =  $CalculatePaginationData['pagelength'];
-    //         $offset = $CalculatePaginationData['offset'];
-    //         $hasNext = $CalculatePaginationData['hasNext'];
-    //         $totalpagecount = $CalculatePaginationData['totalpagecount'];
-    //         $currentpagecount = $CalculatePaginationData['currentpagecount'];
-
-    //         $records = User::onlyTrashed()->where('role', 'faculty')->skip($offset)->take($pagelength)->get();
-
-    //         if ($offset > 0) {
-    //             $_records = [];
-    //             foreach ($records as $record) {
-    //                 $_records[] = $record;
-    //             }
-    //             $records = $_records;
-    //         }
-
-    //         $response = null;
-    //         if ($records->count() > 0) {
-    //             $response = config('QuestApp.JsonResponse.success');
-    //             $response['data']['message'] = [
-    //                 'hasnext' => $hasNext,
-    //                 'currentpagecount' => $currentpagecount,
-    //                 'totalpagecount' => $totalpagecount,
-    //                 'records' => $records,
-    //             ];
-    //         } else {
-    //             $response = config('QuestApp.JsonResponse.404');
-    //             $response['data']['message'] = "Faculty not found";
-    //         }
-    //         return ResponseHelper($response);
-    //     }
-    // }
 }

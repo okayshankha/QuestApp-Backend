@@ -98,29 +98,19 @@ class Controller extends BaseController
             $records = $_records;
         }
 
-        // if (get_class(new $Model) === 'App\Department') {
-        //     $userLevels = config('QuestApp.UserLevels');
-        //     $index = 0;
-        //     foreach ($records as $record) {
-        //         $hod = null;
-        //         if ($record->hod_user_id) {
-        //             $hod = User::where('user_id', $record->hod_user_id)->where('role', $userLevels['f'])->first();
-        //         }
-        //         $records[$index++] = array_merge($record->toArray(), ['hod' => $hod]);
-        //     }
-        // }
-
         $response = null;
         if (!count($records)) {
             $response = config('QuestApp.JsonResponse.404');
             if (!$trashOnly) {
-                $response['data']['message'] = "No Record found";
+                $response['data']['message'] = "No Records found";
             } else {
-                $response['data']['message'] = "No Trashed Record found";
+                $response['data']['message'] = "No Trashed Records found";
             }
         } else {
             $response = config('QuestApp.JsonResponse.success');
-            $response['data']['message'] = [
+
+            $response['data']['message'] = 'Records Fetched Successfully';
+            $response['data']['result'] = [
                 'hasnext' => $hasNext,
                 'currentpagecount' => $currentpagecount,
                 'totalpagecount' => $totalpagecount,

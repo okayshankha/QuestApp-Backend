@@ -21,9 +21,8 @@ class QuestionController extends Controller
                 ->first();
             if ($question) {
                 $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = [
-                    'record' => $question,
-                ];
+                $response['data']['message'] = 'Records Fetched Successfully';
+                $response['data']['result'] = $question;
                 return ResponseHelper($response);
             } else {
                 $response = config('QuestApp.JsonResponse.404');
@@ -59,9 +58,8 @@ class QuestionController extends Controller
                 ->first();
             if ($question) {
                 $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = [
-                    'record' => $question,
-                ];
+                $response['data']['message'] = 'Records Fetched Successfully';
+                $response['data']['result'] = $question;
                 return ResponseHelper($response);
             } else {
                 $response = config('QuestApp.JsonResponse.404');
