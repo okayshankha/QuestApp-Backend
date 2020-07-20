@@ -20,6 +20,7 @@ use App\User;
 use App\Notifications\SignupActivate;
 use App\Notifications\SignupActivateConfirmation;
 use Illuminate\Support\Facades\File;
+use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
 {
@@ -30,36 +31,42 @@ class AuthController extends Controller
      * @param  [string] email
      * @param  [string] password
      * @param  [string] password_confirmation
+     * @param  [string] type
      * @return [string] message
      */
     public function Register(Request $request)
     {
+        $userLevels = config('QuestApp.UserLevels');
+        unset($userLevels['sa']);
         $request->validate([
             'name' => 'required|string',
             'email' => 'required|string|email|unique:users',
-            'password' => 'required|string|confirmed'
+            'password' => 'required|string|confirmed',
+            'type' => ['string', Rule::in(array_keys($userLevels))]
         ]);
 
+        $request->type = $request->type ? $request->type : 's';
 
         $user = new User([
             'name' => $request->name,
             'email' => $request->email,
-            'user_id' => sha1($request->email . $request->password),
+            'user_id' => sha1('User' . $request->email . Str::random(60)),
             'password' => bcrypt($request->password),
-            'activation_token' => Str::random(60)
+            'activation_token' => sha1(Str::random(10)),
+            'role' => $userLevels[$request->type]
         ]);
-
-
         $user->save();
+
 
         $avatar = Avatar::create($user->name)->getImageObject()->encode('png');
         Storage::put('avatars/' . $user->id . '/avatar.png', (string) $avatar);
 
         $user->notify(new SignupActivate($user));
 
-        return response()->json([
-            'message' => 'Successfully created user!'
-        ], 201);
+        $response = config('QuestApp.JsonResponse.created');
+        $response['data']['message'] = 'User created successfully!';
+
+        return ResponseHelper($response);
     }
 
     /**
@@ -127,7 +134,6 @@ class AuthController extends Controller
         return response()->json($request->user());
     }
 
-
     public function signupActivate($token)
     {
         $user = User::where('activation_token', $token)->first();
@@ -148,20 +154,15 @@ class AuthController extends Controller
         ]);
     }
 
-
     public function GetAvatar(Request $request, $user_sl, $filename)
     {
-        // dd('app/avatars/' . $user_sl . '/' . $filename);
         $path = storage_path('app' . DIRECTORY_SEPARATOR . 'avatars' . DIRECTORY_SEPARATOR . $user_sl . DIRECTORY_SEPARATOR . $filename);
-
-        // dd($path);
-
         if (!File::exists($path)) {
             abort(404);
         }
         $file = File::get($path);
         $type = File::mimeType($path);
-        
+
         $response = response()->make($file, 200);
         $response->header("Content-Type", $type);
         return $response;

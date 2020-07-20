@@ -39,37 +39,29 @@ Route::group(['prefix' => 'password', 'middleware' => 'auth:api'], function () {
 
 Route::group(['middleware' => 'auth:api'], function () {
 
-    // Route::group(['prefix' => 'hod'], function () {
-
-    //     // Fetch Faculty Data
-    //     Route::get('/{id?}', 'UserController@FindHod');
-
-    //     // Create New Faculty
-    //     Route::post('/', 'UserController@CreateHod')->middleware('admin.scope');
-    // });
-
     Route::group(['prefix' => 'faculty'], function () {
 
-        // Fetch Trashed Faculty Data
-        Route::get('/trashed/{id?}', 'UserController@FindTrashedFaculty')->middleware('super.admin.scope');
+        // Fetch Trashed Teacher Data
+        Route::get('/trashed/{id?}', 'UserController@FindTrashedTeachers')->middleware('super.admin.scope');
 
-        // Fetch Faculty Data
-        Route::get('/{id?}', 'UserController@FindTeachers')->middleware('super.admin.scope');
+        // Fetch Teacher Data
+        Route::get('/{id?}', 'UserController@FindTeachers')->middleware('teacher.scope');
 
-        // Create New Faculty
-        Route::post('/', 'UserController@CreateFaculty')->middleware('admin.scope');
+        // Create New Teacher
+        Route::post('/', 'UserController@CreateTeacher')->middleware('super.admin.scope');
+
     });
 
     Route::group(['prefix' => 'student'], function () {
 
         // Fetch Trashed Student Data
-        Route::get('/trashed/{id?}', 'UserController@FindTrashedStudent');
+        Route::get('/trashed/{id?}', 'UserController@FindTrashedStudent')->middleware('super.admin.scope');
 
         // Fetch Student Data
         Route::get('/{id?}', 'UserController@FindStudent');
 
         // Create New Student
-        Route::post('/', 'UserController@CreateStudent')->middleware('admin.scope');
+        Route::post('/', 'UserController@CreateStudent')->middleware('super.admin.scope');
     });
 
 
@@ -192,7 +184,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     });
 });
 
-Route::get('/ping', function(){
+Route::get('/ping', function () {
     $response = config('QuestApp.JsonResponse.success');
     return ResponseHelper($response);
 });

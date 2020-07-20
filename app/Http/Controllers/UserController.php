@@ -20,11 +20,6 @@ use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
-    function FindAdmin(Request $request, $id = null)
-    {
-        return $this->Find($request, $id, 'a');
-    }
-
     function FindTeachers(Request $request, $id = null)
     {
         return $this->Find($request, $id, 't');
@@ -49,32 +44,9 @@ class UserController extends Controller
 
 
     // Create
-    function CreateAdmin(Request $request)
+    function CreateTeacher(Request $request)
     {
-        return $this->Create($request, 'a');
-    }
-
-    function CreateHod(Request $request)
-    {
-        $userLevels = config('QuestApp.UserLevels');
-        $request->validate([
-            'department_id' => 'required|string|exists:departments,department_id',
-            'user_id' => 'required|string|exists:users,user_id',
-        ]);
-
-
-        $department = Department::where('department_id', $request->department_id)->first();
-        $department->hod_user_id = $request->user()->user_id;
-        $department->save();
-
-        $response = config('QuestApp.JsonResponse.created');
-        $response['data']['message'] = "{$userLevels['h']} Created Successfully";
-        return ResponseHelper($response);
-    }
-
-    function CreateFaculty(Request $request)
-    {
-        return $this->Create($request, 'f');
+        return $this->Create($request, 't');
     }
 
     function CreateStudent(Request $request)
@@ -101,7 +73,7 @@ class UserController extends Controller
         $password = 'Hello@123';
 
         $user = new User([
-            'user_id' => 'TempIDFaculty' . $request->email,
+            'user_id' => sha1('User' . $request->email . Str::random(60)),
             'name' => $request->name,
             'email' => $request->email,
             'password' => bcrypt($password),
@@ -109,8 +81,6 @@ class UserController extends Controller
             'role' => $userLevels[$type]
         ]);
 
-        $user->save();
-        $user->user_id = sha1('UserFaculty' . $user->id);
         $user->save();
 
         $avatar = Avatar::create($user->name)->getImageObject()->encode('png');
@@ -198,8 +168,21 @@ class UserController extends Controller
                 $records = $_records;
             }
 
+
+            $records = $records->toArray();
+
+
+            foreach ($records as $record) {
+                unset($record['avatar']);
+                if ($request->user()->role === $userLevels['sa'] || $request->user()->role !== $userLevels['t']) {
+                    unset($record['email']);
+                    unset($record['email_verified_at']);
+                    unset($record['role']);
+                }
+            }
+
             $response = null;
-            if ($records->count() > 0) {
+            if (count($records) > 0) {
                 $response = config('QuestApp.JsonResponse.success');
                 $response['data']['message'] = 'Records Fetched successfully';
                 $response['data']['result'] = [
@@ -209,8 +192,8 @@ class UserController extends Controller
                     'records' => $records,
                 ];
             } else {
-                $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = "{$userLevels[$type]} not found";
+                $response = config('QuestApp.JsonResponse.no_records_found');
+                $response['data']['message'] = "No Records found";
             }
             return ResponseHelper($response);
         }
