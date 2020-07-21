@@ -25,6 +25,12 @@ return [
             'message' => 'Error occured'
         ]
     ],
+    '400' => [
+        'httpStatusCode' => 400, // Bad Request
+        'data' => [
+            'message' => 'Bad Request'
+        ]
+    ],
     '404' => [
         'httpStatusCode' => 404, // Not Found
         'data' => [

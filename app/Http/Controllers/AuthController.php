@@ -46,6 +46,7 @@ class AuthController extends Controller
         ]);
 
         $request->type = $request->type ? $request->type : 's';
+        $request->name = ucwords($request->name);
 
         $user = new User([
             'name' => $request->name,
@@ -87,7 +88,7 @@ class AuthController extends Controller
             'remember_me' => 'boolean'
         ]);
         $credentials = request(['email', 'password']);
-        $credentials['active'] = 1;
+        // $credentials['active'] = 1;
         $credentials['deleted_at'] = null;
 
 
@@ -97,6 +98,14 @@ class AuthController extends Controller
             ], 401);
 
         $user = $request->user();
+
+        if($user->active === 0){
+            return response()->json([
+                'message' => 'Account has been suspended.'
+            ], 401);
+        }
+
+
         $tokenResult = $user->createToken('QuestApp');
         $token = $tokenResult->token;
         if ($request->remember_me)

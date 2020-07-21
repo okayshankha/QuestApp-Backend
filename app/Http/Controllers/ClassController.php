@@ -128,11 +128,6 @@ class ClassController extends Controller
 
     function Delete(Request $request, $id)
     {
-        // $validator = Validator::make(
-        //     ['class_id' => $id],
-        //     ['class_id' => 'required|exists:my_classes,class_id']
-        // );
-
         $request->merge(['class_id' => $id]);
         $request->validate([
             'class_id' => ['required', 'string', 'exists:my_classes,class_id', new ClassBelongsToUser],
@@ -157,11 +152,6 @@ class ClassController extends Controller
 
     function Restore(Request $request, $id)
     {
-        // $validator = Validator::make(
-        //     ['class_id' => $id],
-        //     ['class_id' => 'required|exists:my_classes,class_id']
-        // );
-
         $request->merge(['class_id' => $id]);
         $request->validate([
             'class_id' => ['required', 'string', 'exists:my_classes,class_id', new ClassBelongsToUser],
@@ -237,4 +227,29 @@ class ClassController extends Controller
             return ResponseHelper($response);
         }
     }
+
+    function InviteStudent(Request $request)
+    {
+        $request->validate([
+            'id' => ['required_without:email', 'exists:users,user_id', new VerifyStudent],
+            'email' => ['required_without:id', 'exists:users,email', new VerifyStudent],
+            'class_id' => ['required', 'exists:classes,class_id', new ClassBelongsToUser],
+        ]);
+
+        $student = null;
+
+        if ($request->id) {
+            $student = User::where('user_id', $request->id)->first();
+        } else if ($request->email) {
+            $student = User::where('email', $request->email)->first();
+        }
+
+        $payload['type'] = 'space';
+        $payload['data'] = Space::where('space_id', $request->space_id)->first();
+
+        $student->notify(new InvitationToStudent($student, $payload));
+
+        return 'yeeee';
+    }
 }
+

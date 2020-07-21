@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Notifications\InvitationToStudent;
 use App\Rules\SpaceBelongsToUser;
+use App\Rules\VerifyStudent;
 use App\Space;
-
-
+use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -219,5 +220,30 @@ class SpaceController extends Controller
             $response['data']['message'] = 'No Space found';
             return ResponseHelper($response);
         }
+    }
+
+
+    function InviteStudent(Request $request)
+    {
+        $request->validate([
+            'id' => ['required_without:email', 'exists:users,user_id', new VerifyStudent],
+            'email' => ['required_without:id', 'exists:users,email', new VerifyStudent],
+            'space_id' => ['required', 'exists:spaces,space_id', new SpaceBelongsToUser],
+        ]);
+
+        $student = null;
+
+        if ($request->id) {
+            $student = User::where('user_id', $request->id)->first();
+        } else if ($request->email) {
+            $student = User::where('email', $request->email)->first();
+        }
+
+        $payload['type'] = 'space';
+        $payload['data'] = Space::where('space_id', $request->space_id)->first();
+
+        $student->notify(new InvitationToStudent($student, $payload));
+
+        return 'yeeee';
     }
 }

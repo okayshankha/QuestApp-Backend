@@ -49,7 +49,6 @@ Route::group(['middleware' => 'auth:api'], function () {
 
         // Create New Teacher
         Route::post('/', 'UserController@CreateTeacher')->middleware('super.admin.scope');
-
     });
 
     Route::group(['prefix' => 'student'], function () {
@@ -69,22 +68,25 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::group(['prefix' => 'space'], function () {
 
-        // Update Department Data
+        // Update Space Data
         Route::put('/', 'SpaceController@Update')->middleware('teacher.scope');
 
-        // Fetch Trashed Department Data
+        // Invite Student To A Space
+        Route::post('/invite', 'SpaceController@InviteStudent')->middleware('teacher.scope');
+
+        // Fetch Trashed Space Data
         Route::get('/trashed/{id?}', 'SpaceController@FindTrashed')->middleware('teacher.scope');
 
-        // Restore Trashed Department Data
+        // Restore Trashed Space Data
         Route::get('/restore/{id}', 'SpaceController@Restore')->middleware('teacher.scope');
 
         // Fetch Space Data
         Route::get('/{id?}', 'SpaceController@Find')->middleware('teacher.scope');
 
-        // Delete Department Data
+        // Delete Space Data
         Route::delete('/{id}', 'SpaceController@Delete')->middleware('teacher.scope');
 
-        // Create New Department
+        // Create New Space
         Route::post('/', 'SpaceController@Create')->middleware('teacher.scope');
     });
 
@@ -92,6 +94,9 @@ Route::group(['middleware' => 'auth:api'], function () {
 
         // Update Class Data
         Route::put('/', 'ClassController@Update')->middleware('teacher.scope');
+
+        // Invite Student To A Space
+        Route::post('/invite', 'ClassController@InviteStudent')->middleware('teacher.scope');
 
         // Fetch Trashed Class Data
         Route::get('/trashed/{id?}', 'ClassController@FindTrashed')->middleware('teacher.scope');
