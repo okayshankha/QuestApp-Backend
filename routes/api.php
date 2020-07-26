@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('avatar/{user_sl}/{filename}', 'AuthController@GetAvatar');
 
+Route::get('join/{activation_token}', 'UserController@Join');
+
 Route::group(['prefix' => 'auth'], function () {
     Route::post('login', 'AuthController@Login');
     Route::post('register', 'AuthController@Register');
@@ -72,7 +74,10 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::put('/', 'SpaceController@Update')->middleware('teacher.scope');
 
         // Invite Student To A Space
-        Route::post('/invite', 'SpaceController@InviteStudent')->middleware('teacher.scope');
+        Route::post('/invite/{usertype?}/{resend?}', 'SpaceController@Invite')->middleware('teacher.scope');
+
+        // Fetch Invited Space Data
+        Route::get('/find_invited/{id?}', 'SpaceController@FindInvited')->middleware('teacher.scope');
 
         // Fetch Trashed Space Data
         Route::get('/trashed/{id?}', 'SpaceController@FindTrashed')->middleware('teacher.scope');
@@ -96,7 +101,10 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::put('/', 'ClassController@Update')->middleware('teacher.scope');
 
         // Invite Student To A Space
-        Route::post('/invite', 'ClassController@InviteStudent')->middleware('teacher.scope');
+        Route::post('/invite/{usertype?}/{resend?}', 'ClassController@Invite')->middleware('teacher.scope');
+
+        // Fetch Invited Space Data
+        Route::get('/find_invited/{id?}', 'ClassController@FindInvited')->middleware('teacher.scope');
 
         // Fetch Trashed Class Data
         Route::get('/trashed/{id?}', 'ClassController@FindTrashed')->middleware('teacher.scope');

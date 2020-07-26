@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Str;
 
+use App\EntityUserMapping;
 use App\MyClass;
+use App\Notifications\InvitationToStudent;
 use App\Rules\ClassBelongsToUser;
 use App\Rules\SpaceBelongsToUser;
+use App\Rules\VerifyStudent;
 use App\Space;
-
+use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -30,13 +34,12 @@ class ClassController extends Controller
                 ->first();
             if ($class) {
                 $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = [
-                    'record' => $class,
-                ];
+                $response['data']['message'] = 'Records Fetched Successfully';
+                $response['data']['record'] = $class;
                 return ResponseHelper($response);
             } else {
-                $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Trashed Record found';
+                $response = config('QuestApp.JsonResponse.no_records_found');
+                $response['data']['message'] = 'No Trashed Records found';
                 return ResponseHelper($response);
             }
         } else {
@@ -58,7 +61,7 @@ class ClassController extends Controller
         }
     }
 
-    function Find(Request $request, $id = null)
+    function Find_TeacherScope(Request $request, $id = null)
     {
         if ($id) {
             /**
@@ -73,13 +76,12 @@ class ClassController extends Controller
                 ->first();
             if ($class) {
                 $response = config('QuestApp.JsonResponse.success');
-                $response['data']['message'] = [
-                    'record' => $class,
-                ];
+                $response['data']['message'] = 'Records Fetched Successfully';
+                $response['data']['record'] = $class;
                 return ResponseHelper($response);
             } else {
-                $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Record found';
+                $response = config('QuestApp.JsonResponse.no_records_found');
+                $response['data']['message'] = 'No Records found';
                 return ResponseHelper($response);
             }
         } else {
@@ -97,6 +99,133 @@ class ClassController extends Controller
             ]);
 
             return ResponseHelper($classes);
+        }
+    }
+
+    function Find_StudentScope(Request $request, $id = null)
+    {
+        /**
+         * Fetches Class Data If and Only If the Student Has Joined the Class.
+         */
+
+        $Model = MyClass::class;
+        $userLevels = config('QuestApp.UserLevels');
+
+        if ($id) {
+            /**
+             * Fetch Specific Class Data
+             */
+            $request->merge(['class_id' => $id]);
+
+            $request->validate([
+                'class_id' => ['required', 'string', 'exists:my_classes,class_id'],
+            ]);
+
+            $modelClassTableName = (new $Model)->getTable();
+            $modelClassIdString = $this->GetCustomClassIdString($Model);
+            $type = (request()->user()->role === $userLevels['s']) ? 'student' : "";
+
+            $class = MyClass::join('entity_user_mappings', "$modelClassTableName.$modelClassIdString", '=', 'entity_user_mappings.entity_id')
+                ->where('entity_user_mappings.user_id', request()->user()->user_id)
+                ->where('entity_user_mappings.active', true)
+                ->where('entity_user_mappings.type', explode('_', $modelClassIdString)[0] . ":for_$type")
+                ->where("$modelClassTableName.$modelClassIdString", $id)
+                ->select("$modelClassTableName.*", 'entity_user_mappings.joined_at')
+                ->first();
+            if ($class) {
+                $response = config('QuestApp.JsonResponse.success');
+                $response['data']['message'] = 'Records Fetched Successfully';
+                $response['data']['record'] = $class;
+                return ResponseHelper($response);
+            } else {
+                $response = config('QuestApp.JsonResponse.no_records_found');
+                $response['data']['message'] = 'No Records found';
+                return ResponseHelper($response);
+            }
+        } else {
+            /**
+             * Fetch All Class Data
+             */
+            $pagelength = $request->query('pagelength');
+            $page = $request->query('page');
+
+            $Model = MyClass::class;
+
+            $classes = $this->FetchPagedRecordsWithJoinMapping($Model, [
+                'page' => $page,
+                'pagelength' => $pagelength
+            ]);
+
+            return ResponseHelper($classes);
+        }
+    }
+
+    function FindInvited(Request $request, $id = null)
+    {
+        $Model = MyClass::class;
+        $userLevels = config('QuestApp.UserLevels');
+
+        if ($id) {
+            /**
+             * Fetch Specific Space Data
+             */
+            $request->merge(['class_id' => $id]);
+            $request->validate([
+                'class_id' => ['required', 'string', 'exists:my_classes,class_id'],
+            ]);
+
+            $modelClassTableName = (new $Model)->getTable();
+            $modelClassIdString = $this->GetCustomClassIdString($Model);
+            $type = (request()->user()->role === $userLevels['t']) ? 'teacher' : "";
+
+            $class = MyClass::join('entity_user_mappings', "$modelClassTableName.$modelClassIdString", '=', 'entity_user_mappings.entity_id')
+                ->where('entity_user_mappings.user_id', request()->user()->user_id)
+                ->where('entity_user_mappings.active', true)
+                ->where('entity_user_mappings.type', explode('_', $modelClassIdString)[0] . ":for_$type")
+                ->where("$modelClassTableName.$modelClassIdString", $id)
+                ->select("$modelClassTableName.*", 'entity_user_mappings.joined_at')
+                ->first();
+            if ($class) {
+                $response = config('QuestApp.JsonResponse.success');
+                $response['data']['message'] = 'Records Fetched Successfully';
+                $response['data']['result'] = $class;
+                return ResponseHelper($response);
+            } else {
+                $response = config('QuestApp.JsonResponse.no_records_found');
+                $response['data']['message'] = 'No Records found';
+                return ResponseHelper($response);
+            }
+        } else {
+            /**
+             * Fetch All Space Data
+             */
+            $request->validate([
+                'pagelength' => 'integer',
+                'page' => 'integer'
+            ]);
+            $pagelength = $request->query('pagelength');
+            $page = $request->query('page');
+
+            $classes = $this->FetchPagedRecordsWithJoinMapping($Model, [
+                'page' => $page,
+                'pagelength' => $pagelength
+            ]);
+
+            return ResponseHelper($classes);
+        }
+    }
+
+
+
+    function Find(Request $request, $id = null)
+    {
+        $userLevels = config('QuestApp.UserLevels');
+        if ($request->user()->role === $userLevels['sa']) {
+            return $this->Find_TeacherScope($request, $id);
+        } else if ($request->user()->role === $userLevels['t']) {
+            return $this->Find_TeacherScope($request, $id);
+        } else if ($request->user()->role === $userLevels['s']) {
+            return $this->Find_StudentScope($request, $id);
         }
     }
 
@@ -228,28 +357,9 @@ class ClassController extends Controller
         }
     }
 
-    function InviteStudent(Request $request)
+    function Invite(Request $request, $usertype = null, $resend = null)
     {
-        $request->validate([
-            'id' => ['required_without:email', 'exists:users,user_id', new VerifyStudent],
-            'email' => ['required_without:id', 'exists:users,email', new VerifyStudent],
-            'class_id' => ['required', 'exists:classes,class_id', new ClassBelongsToUser],
-        ]);
-
-        $student = null;
-
-        if ($request->id) {
-            $student = User::where('user_id', $request->id)->first();
-        } else if ($request->email) {
-            $student = User::where('email', $request->email)->first();
-        }
-
-        $payload['type'] = 'space';
-        $payload['data'] = Space::where('space_id', $request->space_id)->first();
-
-        $student->notify(new InvitationToStudent($student, $payload));
-
-        return 'yeeee';
+        $type = 'class';
+        return $this->SendInviteToEntity($request, $usertype, $type, $resend);
     }
 }
-

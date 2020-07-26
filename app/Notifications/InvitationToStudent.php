@@ -22,6 +22,9 @@ class InvitationToStudent extends Notification
     {
         $this->recipient = $recipient;
         $this->payload = $payload;
+
+        $this->payload["payload"]->name = ucfirst($this->payload["payload"]->name);
+        $this->payload["type"] = ucfirst($this->payload["type"]);
     }
 
     /**
@@ -45,9 +48,10 @@ class InvitationToStudent extends Notification
     {
         $sender = request()->user();
         return (new MailMessage)
+            ->subject("Invitation To {$this->payload["type"]} From {$sender->name}")
             ->greeting("Hello, {$this->recipient->name}")
-            ->line("{$sender->name} has invited you to the {$this->payload["type"]} '{$this->payload["data"]->name}'")
-            ->action('Join Class', url('/'));
+            ->line("{$sender->name} has invited you to '{$this->payload["payload"]->name}'")
+            ->action('Join ' . ucwords($this->payload["type"]), url($this->payload["join_url"]));
     }
 
     /**

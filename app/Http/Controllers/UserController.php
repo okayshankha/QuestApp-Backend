@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Department;
+use App\EntityUserMapping;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Avatar;
@@ -197,5 +198,60 @@ class UserController extends Controller
             }
             return ResponseHelper($response);
         }
+    }
+
+    function Join(Request $request, $activation_token)
+    {
+        $response = null;
+        $user = null;
+        $userLevels = config('QuestApp.UserLevels');
+
+        $entitymap = EntityUserMapping::where('activation_token', $activation_token)->first();
+
+        if ($entitymap) {
+            if (filter_var($entitymap->user_id, FILTER_VALIDATE_EMAIL)) {
+                if ($entitymap->type == 'class:for_student') {
+                    $user = User::where('email', $entitymap->user_id)
+                        ->where('role', $userLevels['s'])
+                        ->first();
+                } else {
+                    $user = User::where('email', $entitymap->user_id)
+                        ->where('role', $userLevels['t'])
+                        ->first();
+                }
+            } else {
+                if ($entitymap->type == 'class:for_student') {
+                    $user = User::where('user_id', $entitymap->user_id)
+                        ->where('role', $userLevels['s'])
+                        ->first();
+                } else {
+                    $user = User::where('user_id', $entitymap->user_id)
+                        ->where('role', $userLevels['t'])
+                        ->first();
+                }
+            }
+
+            if ($user) {
+                $response = config('QuestApp.JsonResponse.success');
+                if (!$entitymap->active) {
+                    $entitymap->user_id = $user->user_id;
+                    $entitymap->joined_at = Carbon::now()->toISOString();
+                    $response['data']['message'] = "Joined Successfully";
+                } else {
+                    $response['data']['message'] = "Already Joined.";
+                }
+                $entitymap->active = true;
+                $entitymap->activation_token = null;
+                $entitymap->save();
+            } else {
+                $response = config('QuestApp.JsonResponse.success');
+                $response['data']['message'] = "Email is not registered.";
+            }
+        } else {
+            $response = config('QuestApp.JsonResponse.no_records_found');
+            $response['data']['message'] = "Invalid Join Activation Link.";
+        }
+
+        return ResponseHelper($response);
     }
 }

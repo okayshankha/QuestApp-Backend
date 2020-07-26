@@ -32,8 +32,8 @@ class SpaceController extends Controller
                 $response['data']['result'] = $space;
                 return ResponseHelper($response);
             } else {
-                $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Trashed Record found';
+                $response = config('QuestApp.JsonResponse.no_records_found');
+                $response['data']['message'] = 'No Trashed Records found';
                 return ResponseHelper($response);
             }
         } else {
@@ -75,8 +75,8 @@ class SpaceController extends Controller
                 $response['data']['result'] = $space;
                 return ResponseHelper($response);
             } else {
-                $response = config('QuestApp.JsonResponse.404');
-                $response['data']['message'] = 'No Record found';
+                $response = config('QuestApp.JsonResponse.no_records_found');
+                $response['data']['message'] = 'No Records found';
                 return ResponseHelper($response);
             }
         } else {
@@ -93,6 +93,63 @@ class SpaceController extends Controller
             $Model = Space::class;
 
             $spaces = $this->FetchPagedRecords($Model, [
+                'page' => $page,
+                'pagelength' => $pagelength
+            ]);
+
+            return ResponseHelper($spaces);
+        }
+    }
+
+    function FindInvited(Request $request, $id = null)
+    {
+        $Model = Space::class;
+        $userLevels = config('QuestApp.UserLevels');
+
+        if ($id) {
+            /**
+             * Fetch Specific Space Data
+             */
+            $request->merge(['space_id' => $id]);
+            $request->validate([
+                'space_id' => ['required', 'string', 'exists:spaces,space_id'],
+            ]);
+
+            $modelClassTableName = (new $Model)->getTable();
+            $modelClassIdString = $this->GetCustomClassIdString($Model);
+            $type = (request()->user()->role === $userLevels['t']) ? 'teacher' : "";
+
+            $space = Space::join('entity_user_mappings', "$modelClassTableName.$modelClassIdString", '=', 'entity_user_mappings.entity_id')
+                ->where('entity_user_mappings.user_id', request()->user()->user_id)
+                ->where('entity_user_mappings.active', true)
+                ->where('entity_user_mappings.type', explode('_', $modelClassIdString)[0] . ":for_$type")
+                ->where("$modelClassTableName.$modelClassIdString", $id)
+                ->select("$modelClassTableName.*", 'entity_user_mappings.joined_at')
+                ->first();
+            if ($space) {
+                $response = config('QuestApp.JsonResponse.success');
+                $response['data']['message'] = 'Records Fetched Successfully';
+                $response['data']['result'] = $space;
+                return ResponseHelper($response);
+            } else {
+                $response = config('QuestApp.JsonResponse.no_records_found');
+                $response['data']['message'] = 'No Records found';
+                return ResponseHelper($response);
+            }
+        } else {
+            /**
+             * Fetch All Space Data
+             */
+            $request->validate([
+                'pagelength' => 'integer',
+                'page' => 'integer'
+            ]);
+            $pagelength = $request->query('pagelength');
+            $page = $request->query('page');
+
+            $Model = Space::class;
+
+            $spaces = $this->FetchPagedRecordsWithJoinMapping($Model, [
                 'page' => $page,
                 'pagelength' => $pagelength
             ]);
@@ -127,11 +184,6 @@ class SpaceController extends Controller
 
     function Delete(Request $request, $id)
     {
-        // $validator = Validator::make(
-        //     ['space_id' => $id],
-        //     ['space_id' => 'required|exists:spaces,space_id']
-        // );
-
         $request->merge(['space_id' => $id]);
         $request->validate([
             'space_id' => ['required', 'string', 'exists:spaces,space_id', new SpaceBelongsToUser],
@@ -155,11 +207,6 @@ class SpaceController extends Controller
 
     function Restore(Request $request, $id)
     {
-        // $validator = Validator::make(
-        //     ['space_id' => $id],
-        //     ['space_id' => 'required|exists:spaces,space_id']
-        // );
-
         $request->merge(['space_id' => $id]);
         $request->validate([
             'space_id' => ['required', 'string', new SpaceBelongsToUser],
@@ -223,27 +270,10 @@ class SpaceController extends Controller
     }
 
 
-    function InviteStudent(Request $request)
+    function Invite(Request $request, $usertype = null, $resend = null)
     {
-        $request->validate([
-            'id' => ['required_without:email', 'exists:users,user_id', new VerifyStudent],
-            'email' => ['required_without:id', 'exists:users,email', new VerifyStudent],
-            'space_id' => ['required', 'exists:spaces,space_id', new SpaceBelongsToUser],
-        ]);
-
-        $student = null;
-
-        if ($request->id) {
-            $student = User::where('user_id', $request->id)->first();
-        } else if ($request->email) {
-            $student = User::where('email', $request->email)->first();
-        }
-
-        $payload['type'] = 'space';
-        $payload['data'] = Space::where('space_id', $request->space_id)->first();
-
-        $student->notify(new InvitationToStudent($student, $payload));
-
-        return 'yeeee';
+        $type = 'space';
+        $Model = Space::class;
+        return $this->SendInviteToEntity($request, $usertype, $type, $Model, $resend);
     }
 }

@@ -5,7 +5,7 @@ namespace App\Rules;
 use App\User;
 use Illuminate\Contracts\Validation\Rule;
 
-class VerifyStudent implements Rule
+class VerifyTeacher implements Rule
 {
     private $attribute, $invalid_values, $PASS_FOR_NON_EXISTENT = false;
     /**
@@ -49,11 +49,10 @@ class VerifyStudent implements Rule
             $user = User::all()
                 ->where($this->attribute, $value)
                 ->where('active', true)
-                // ->where('role', $userLevels['s'])
                 ->first();
 
             if ($user) {
-                if ($user->role !== $userLevels['s']) {
+                if ($user->role !== $userLevels['t']) {
                     $evaluation = false;
                     $this->invalid_values[] = $value;
                 }
