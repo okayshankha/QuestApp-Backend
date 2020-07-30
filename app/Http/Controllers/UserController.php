@@ -19,6 +19,14 @@ use App\Notifications\SignupActivate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
+
+
+/**
+ * @group  User management
+ *
+ * APIs for managing users
+ */
+
 class UserController extends Controller
 {
     function FindTeachers(Request $request, $id = null)

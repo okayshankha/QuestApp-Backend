@@ -13,6 +13,12 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+/**
+ * @group  User management
+ *
+ * APIs for managing users
+ */
+
 Route::get('avatar/{user_sl}/{filename}', 'AuthController@GetAvatar');
 
 Route::get('join/{activation_token}', 'UserController@Join');

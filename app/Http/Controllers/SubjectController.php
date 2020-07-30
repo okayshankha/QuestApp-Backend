@@ -101,9 +101,9 @@ class SubjectController extends Controller
     function Create(Request $request)
     {
         $request->validate([
-            'name' => ['required', 'string', new SubjectBelongsToUser],
+            'class_id' => ['required', 'string', 'exists:my_classes,class_id', new ClassBelongsToUser],
+            'name' => ['required', 'string', new SubjectBelongsToUser($request->class_id)],
             'description' => 'string',
-            'class_id' => ['required', 'string', 'exists:my_classes,class_id', new ClassBelongsToUser]
         ]);
 
         $subject = new Subject([
