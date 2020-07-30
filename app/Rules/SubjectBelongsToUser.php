@@ -58,10 +58,7 @@ class SubjectBelongsToUser implements Rule
     public function message()
     {
         if ($this->attribute == 'name') {
-            return [
-                'This subject :attribute already exists in the class.',
-                'If not found find in trash'
-            ];
+            return 'This subject :attribute already exists(may be trashed) in the class.';
         } else if ($this->attribute == 'subject_id') {
             return 'This :attribute does not belong to the user.';
         }

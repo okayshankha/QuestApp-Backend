@@ -1,5 +1,47 @@
 <?php
 
+
+function GetCustomClassIdString($Model)
+{
+    $modelClass = explode('\\', get_class(new $Model))[1];
+    $modelClassIdString = '_id';
+
+    switch ($modelClass) {
+        case 'ExamQuestionMap':
+            $modelClassIdString = 'exam_question_map' . $modelClassIdString;
+            break;
+        case 'Question':
+            $modelClassIdString = 'question' . $modelClassIdString;
+            break;
+        case 'Subject':
+            $modelClassIdString = 'subject' . $modelClassIdString;
+            break;
+        case 'User':
+            $modelClassIdString = 'user' . $modelClassIdString;
+            break;
+        case 'Examination':
+            $modelClassIdString = 'examination' . $modelClassIdString;
+            break;
+        case 'EntityUserMapping':
+            $modelClassIdString = 'entity_user_mapping' . $modelClassIdString;
+            break;
+        case 'AssessmentRecord':
+            $modelClassIdString = 'class' . $modelClassIdString;
+            break;
+        case 'MyClass':
+            $modelClassIdString = 'class' . $modelClassIdString;
+            break;
+        case 'Space':
+            $modelClassIdString = 'space' . $modelClassIdString;
+            break;
+        default:
+            $modelClassIdString = "id";
+    }
+
+    return $modelClassIdString;
+}
+
+
 function ResponseHelper($parameter)
 {
     try {

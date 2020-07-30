@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\EntityUserMapping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -58,7 +59,7 @@ class ExaminationController extends Controller
         }
     }
 
-    function Find(Request $request, $id = null)
+    function Find_TeacherScope(Request $request, $id = null)
     {
         if ($id) {
             /**
@@ -99,11 +100,73 @@ class ExaminationController extends Controller
         }
     }
 
+    function Find_StudentScope(Request $request, $id = null)
+    {
+        if ($id) {
+            /**
+             * Fetch Specific Category Data
+             */
+            $request->merge(['examination_id' => $id]);
+            $request->validate([
+                'examination_id' => ['required', 'string', 'exists:examinations,examination_id', new ExaminationBelongsToUser],
+            ]);
+
+            $examinations = Examination::where('examination_id', $id)
+                ->first();
+            if ($examinations) {
+                $response = config('QuestApp.JsonResponse.success');
+                $response['data']['message'] = 'Records Fetched Successfully';
+                $response['data']['result'] = $examinations;
+                return ResponseHelper($response);
+            } else {
+                $response = config('QuestApp.JsonResponse.404');
+                $response['data']['message'] = 'No Records found';
+                return ResponseHelper($response);
+            }
+        } else {
+            /**
+             * Fetch All Subjects Data
+             */
+            $pagelength = $request->query('pagelength');
+            $page = $request->query('page');
+
+            $classList = EntityUserMapping::where('user_id', $request->user()->user_id)
+            ->where('type', 'class:for_student')
+            ->where('active', 1)
+            ->pluck('entity_id');
+
+            dd('$classList');
+
+            $Model = Examination::class;
+
+            $examinations = [];
+
+            // $examinations = $this->FetchPagedRecords($Model, [
+            //     'page' => $page,
+            //     'pagelength' => $pagelength
+            // ]);
+
+            return ResponseHelper($examinations);
+        }
+    }
+
+
+    function Find(Request $request, $id = null){
+        $userLevels = config('QuestApp.UserLevels');
+        if ($request->user()->role === $userLevels['sa']) {
+            return $this->Find_TeacherScope($request, $id);
+        } else if ($request->user()->role === $userLevels['t']) {
+            return $this->Find_TeacherScope($request, $id);
+        } else if ($request->user()->role === $userLevels['s']) {
+            return $this->Find_StudentScope($request, $id);
+        }
+    }
+
 
     function Create(Request $request)
     {
         $request->validate([
-            'name' => ['required', 'string', new ExaminationBelongsToUser],
+            'name' => ['required', 'string', new ExaminationBelongsToUser($request->subject_id)],
             'description' => 'string',
             'subject_id' => ['required', 'string', 'exists:subjects,subject_id', new SubjectBelongsToUser]
         ]);
@@ -126,11 +189,6 @@ class ExaminationController extends Controller
 
     function Delete(Request $request, $id)
     {
-        // $validator = Validator::make(
-        //     ['examination_id' => $id],
-        //     ['examination_id' => 'required|exists:examinations,examination_id']
-        // );
-
         $request->merge(['examination_id' => $id]);
         $request->validate([
             'examination_id' => ['required', 'string', 'exists:examinations,examination_id', new ExaminationBelongsToUser],
@@ -155,11 +213,6 @@ class ExaminationController extends Controller
 
     function Restore(Request $request, $id)
     {
-        // $validator = Validator::make(
-        //     ['examination_id' => $id],
-        //     ['examination_id' => 'required|exists:examinations,examination_id']
-        // );
-
         $request->merge(['examination_id' => $id]);
         $request->validate([
             'examination_id' => ['required', 'string', 'exists:examinations,examination_id', new ExaminationBelongsToUser],
@@ -295,11 +348,6 @@ class ExaminationController extends Controller
 
     function GetMappedQuestions(Request $request, $id)
     {
-        // $validator = Validator::make(
-        //     ['examination_id' => $id],
-        //     ['examination_id' => 'required|exists:examinations,examination_id']
-        // );
-
         $request->merge(['examination_id' => $id]);
         $request->validate([
             'examination_id' => ['required', 'string', 'exists:examinations,examination_id', new ExaminationBelongsToUser],

@@ -15,6 +15,7 @@ use App\Notifications\InvitationToStudent;
 use App\Rules\ClassBelongsToUser;
 use App\Rules\ExceptSelf;
 use App\Rules\SpaceBelongsToUser;
+use App\Rules\VerifyActiveWithEntryCurstomID;
 use App\Rules\VerifyStudent;
 use App\Rules\VerifyTeacher;
 use Illuminate\Validation\Rule;
@@ -137,24 +138,24 @@ class Controller extends BaseController
         return $response;
     }
 
-    protected function GetCustomClassIdString($Model)
-    {
-        $modelClass = explode('\\', get_class(new $Model))[1];
-        $modelClassIdString = '_id';
+    // protected function GetCustomClassIdString($Model)
+    // {
+    //     $modelClass = explode('\\', get_class(new $Model))[1];
+    //     $modelClassIdString = '_id';
 
-        switch ($modelClass) {
-            case 'MyClass':
-                $modelClassIdString = 'class' . $modelClassIdString;
-                break;
-            case 'Space':
-                $modelClassIdString = 'space' . $modelClassIdString;
-                break;
-            default:
-                $modelClassIdString = "id";
-        }
+    //     switch ($modelClass) {
+    //         case 'MyClass':
+    //             $modelClassIdString = 'class' . $modelClassIdString;
+    //             break;
+    //         case 'Space':
+    //             $modelClassIdString = 'space' . $modelClassIdString;
+    //             break;
+    //         default:
+    //             $modelClassIdString = "id";
+    //     }
 
-        return $modelClassIdString;
-    }
+    //     return $modelClassIdString;
+    // }
 
 
     protected function FetchPagedRecordsWithJoinMapping($Model, $options)
@@ -169,7 +170,7 @@ class Controller extends BaseController
         $trashOnly = false;
 
         $modelClassTableName = (new $Model)->getTable();
-        $modelClassIdString = $this->GetCustomClassIdString($Model);
+        $modelClassIdString = GetCustomClassIdString($Model);
 
         if (!$trashOnly) {
             $total = $Model::join('entity_user_mappings', "$modelClassTableName.$modelClassIdString", '=', 'entity_user_mappings.entity_id')
@@ -241,19 +242,19 @@ class Controller extends BaseController
     }
 
 
-    protected function SendInviteToEntity(Request $request, $usertype, $type, $Model,  $resend = null)
+    protected function SendInviteToEntity(Request $request, $usertype, $type, $Model, $resend = null)
     {
-
         $request->merge([
             'usertype' => $usertype,
             'resend' => $resend,
         ]);
 
         $modelClassTableName = (new $Model)->getTable();
-        $modelClassIdString = $this->GetCustomClassIdString($Model);
+        $modelClassIdString = GetCustomClassIdString($Model);
 
         $id_validation_rule = [];
         $email_validation_rule = [];
+        $entity_id_validation_rule = ['required', "exists:$modelClassTableName,$modelClassIdString", new VerifyActiveWithEntryCurstomID($Model)];
 
         if ($usertype !== 'teacher') {
             $id_validation_rule = ['required_without:email', 'exists:users,user_id', new VerifyStudent];
@@ -267,6 +268,7 @@ class Controller extends BaseController
             'id' => $id_validation_rule,
             'email' => $email_validation_rule,
             'usertype' => ['required', Rule::in(['student', 'teacher'])],
+            'entity_id' => $entity_id_validation_rule,
             'resend' => Rule::in([null, 'resend', 'r'])
         ];
 
@@ -359,7 +361,7 @@ class Controller extends BaseController
         }
 
 
-        $payload['type'] = "space";
+        $payload['type'] = $type;
         $payload['payload'] = $Model::where($modelClassIdString, $entity_id)->first();
         $payload['join_url'] = "/api/join/{$entitymap->activation_token}";
 

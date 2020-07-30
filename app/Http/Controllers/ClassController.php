@@ -9,6 +9,7 @@ use App\MyClass;
 use App\Notifications\InvitationToStudent;
 use App\Rules\ClassBelongsToUser;
 use App\Rules\SpaceBelongsToUser;
+use App\Rules\VerifyActiveWithEntryCurstomID;
 use App\Rules\VerifyStudent;
 use App\Space;
 use App\User;
@@ -359,7 +360,16 @@ class ClassController extends Controller
 
     function Invite(Request $request, $usertype = null, $resend = null)
     {
+        $model = MyClass::class;
+
+        $request->validate([
+            'class_id' => ['required', 'exists:my_classes,class_id', new VerifyActiveWithEntryCurstomID($model)],
+        ]);
+
+        $request->merge(['entity_id' => $request->class_id]);
+
         $type = 'class';
-        return $this->SendInviteToEntity($request, $usertype, $type, $resend);
+        
+        return $this->SendInviteToEntity($request, $usertype, $type, $model, $resend);
     }
 }
